@@ -25,5 +25,24 @@
 			<artifactId>snkjape</artifactId>
 			<version>1.0</version>
 		</dependency>
+		
+		<dependency>
+			<groupId>br.com.sankhya.mgecomercial</groupId>
+			<artifactId>snkmgecommodel</artifactId>
+			<version>1.0</version>
+		</dependency>		
+		
+		<dependency>
+			<groupId>br.com.sankhya.modelcore</groupId>
+			<artifactId>snkmodelcore</artifactId>
+			<version>1.0</version>
+		</dependency>
+		
+		<dependency>
+			<groupId>br.com.sankhya.util</groupId>
+			<artifactId>sanutil</artifactId>
+			<version>1.0</version>
+		</dependency>		
+		
 	</dependencies>
 </project>

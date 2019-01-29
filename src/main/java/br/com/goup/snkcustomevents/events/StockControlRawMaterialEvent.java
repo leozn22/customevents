@@ -19,9 +19,9 @@ public class StockControlRawMaterialEvent implements EventoProgramavelJava{
      * @param Context persistence instance of TGFITE
      * @throws Exception in case of stock less than or equal to zero
      */
-    private void verifyStock(PersistenceEvent persistencia) throws Exception{
+    private void verifyStock(PersistenceEvent persistenceEvent) throws Exception{
 
-        DynamicVO iteVO = (DynamicVO) persistencia.getVo();
+        DynamicVO iteVO = (DynamicVO) persistenceEvent.getVo();
 
         //JapeWrapper topDAO = JapeFactory.dao("TipoOperacao");
         JapeWrapper cabDAO = JapeFactory.dao("CabecalhoNota");
@@ -30,7 +30,7 @@ public class StockControlRawMaterialEvent implements EventoProgramavelJava{
         //DynamicVO topVO = topDAO.findByPK(cabVO.asBigDecimal("CODTIPOPER"),cabVO.asTimestamp("DHTIPOPER"));
 
         if("S".equals(cabVO.asString("TipoOperacao.AD_VALIDAESTOQUE"))) {
-            JdbcWrapper jdbc = persistencia.getJdbcWrapper();
+            JdbcWrapper jdbc = persistenceEvent.getJdbcWrapper();
             NativeSql sql = new NativeSql(jdbc);
             sql.appendSql(" SELECT SUM(ESTOQUE - RESERVADO) as ESTOQUE, (SUM(ESTOQUE - RESERVADO) - :QTDNEG) as DISPONIVEL FROM TGFEST WHERE CODPROD = :PRODUTO AND CODEMP = :EMPRESA ");
             sql.setNamedParameter("PRODUTO", iteVO.asBigDecimal("CODPROD"));
