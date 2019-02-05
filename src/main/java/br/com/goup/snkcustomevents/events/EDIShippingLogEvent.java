@@ -46,7 +46,7 @@ public class EDIShippingLogEvent implements EventoProgramavelJava {
 
 		if ("".equals(modifingFields.getNewValue("NUMREMESSA"))
 				|| ((BigDecimal) modifingFields.getNewValue("NUMREMESSA")).compareTo(BigDecimal.ZERO) == 0) {
-			creLog.set("MENSAGEM", "NÚMERO DE REMESSA ZERADO/LIMPO");
+			creLog.set("MENSAGEM", "NÃšMERO DE REMESSA ZERADO/LIMPO");
 		} else {
 			creLog.set("MENSAGEM", "REMESSA GERADA OU MODIFICADA");
 		}

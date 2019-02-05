@@ -44,7 +44,7 @@ public class StockControlRawMaterialEvent implements EventoProgramavelJava{
 
                 if (disponivel.compareTo(BigDecimal.ZERO) < 0) {
                     r1.getStatement().close();
-                    throw new Exception("<font size='12'><b> Estoque insuficiente para atender a solicitação. <br> Disponível: " + estoque + " <br><br> Favor entrar em contato com o setor de estoque e compras. </b></font>");
+                    throw new Exception("<font size='12'><b> Estoque insuficiente para atender a solicitaÃ§Ã£o. <br> DisponÃ­vel: " + estoque + " <br><br> Favor entrar em contato com o setor de estoque e compras. </b></font>");
                 }
             }
             r1.getStatement().close();
