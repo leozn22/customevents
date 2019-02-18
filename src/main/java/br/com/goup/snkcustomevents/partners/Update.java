@@ -16,9 +16,9 @@ public class Update implements EventoProgramavelJava {
 		String url           = "";
 		DynamicVO parceiroVO = (DynamicVO) persistenceEvent.getVo();
 		String json          = parceiro.getJsonUpdatePartner(parceiroVO);
-		url = "http://snk-integrations-api-dev.sa-east-1.elasticbeanstalk.com:8080/api/"; // PRODUÇÃO
-		url = "http://127.0.0.1:8080/api/register/partners";                              // TESTE LOCAL
-		url = "http://app.zapgrafica.com.br:8080/api/register/partners";                  // HOMOLOGACAO
+		url = "http://snk-integrations-api-dev.sa-east-1.elasticbeanstalk.com:8080/api/register/partners"; // PRODUCAO
+		//url = "http://127.0.0.1:8080/api/register/partners";                              // TESTE LOCAL
+		//url = "http://app.zapgrafica.com.br:8080/api/register/partners";                  // HOMOLOGACAO
 		
 		IntegrationApi.send(url, json, "PUT");
 	}
