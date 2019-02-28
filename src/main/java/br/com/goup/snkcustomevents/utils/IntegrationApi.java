@@ -9,7 +9,7 @@ import java.net.URL;
 
 public class IntegrationApi {
 
-	public static String send(String urlWs, String params, String method) {
+	public static String send(String urlWs, String params, String method) throws Exception {
 	    URL url;
 	    HttpURLConnection connection = null;
 
@@ -47,7 +47,9 @@ public class IntegrationApi {
 	        return result.toString();
 
 	    } 
-	    catch (Exception e) { return null; } 
+	    catch (Exception e) { 
+	    	throw new Exception("API INTEGRATION FAILED: "+ e.getMessage());
+	    } 
 	    finally {
 	        if(connection != null) {
 	            connection.disconnect();
