@@ -301,36 +301,36 @@ public class Parceiro {
 		this.ativo                 = parceiroVO.asString("ATIVO");
 		this.cadastroLiberado      = parceiroVO.asString("AD_LIBERADO");
 		this.codigoCidade          = parceiroVO.asBigDecimal("CODCID");
-		//this.codigoBairro        = parceiroVO.asBigDecimal("CODBAI");     // Não permite pesquisa
-		//this.codigoEndereco      = parceiroVO.asBigDecimal("CODEND");     // Não permite pesquisa
-		//this.codigoPerfil        = parceiroVO.asBigDecimal("CODTIPPARC"); // Não permite pesquisa
-		//this.limiteCredito       = parceiroVO.asBigDecimal("LIMCRED");    // Não permite pesquisa
+		//this.codigoBairro        = parceiroVO.asBigDecimal("CODBAI");     // Nao permite pesquisa
+		//this.codigoEndereco      = parceiroVO.asBigDecimal("CODEND");     // Nao permite pesquisa
+		//this.codigoPerfil        = parceiroVO.asBigDecimal("CODTIPPARC"); // Nao permite pesquisa
+		//this.limiteCredito       = parceiroVO.asBigDecimal("LIMCRED");    // Nao permite pesquisa
 
-		if(!parceiroVO.asString("CGC_CPF").isEmpty())               { this.cpf                   = parceiroVO.asString("CGC_CPF"); }
-		if(!parceiroVO.asString("EMAIL").isEmpty())                 { this.email                 = parceiroVO.asString("EMAIL"); }
-		if(!parceiroVO.asString("HOMEPAGE").isEmpty())              { this.site                  = parceiroVO.asString("HOMEPAGE"); }
-		if(!parceiroVO.asString("IDENTINSCESTAD").isEmpty())        { this.ie                    = parceiroVO.asString("IDENTINSCESTAD"); }
-		if(!parceiroVO.asString("NOMEPARC").isEmpty())              { this.nomeParceiro          = parceiroVO.asString("NOMEPARC"); }
-		if(!parceiroVO.asString("NUMEND").isEmpty())                { this.numeroEndereco        = parceiroVO.asString("NUMEND"); }
-		if(!parceiroVO.asString("RAZAOSOCIAL").isEmpty())           { this.razaoSocial           = parceiroVO.asString("RAZAOSOCIAL"); }
-		if(!parceiroVO.asString("TELEFONE").isEmpty())              { this.telefone              = parceiroVO.asString("TELEFONE"); }
-		//if(!parceiroVO.asString("AD_CLASSE_PARCEIRO").isEmpty())  { this.classeParceiro        = parceiroVO.asString("AD_CLASSE_PARCEIRO"); } // Não permite pesquisa
-		//if(!parceiroVO.asString("AD_LIBERADO").isEmpty())         { this.cadastroLiberado      = parceiroVO.asString("AD_LIBERADO"); }        // Não permite pesquisa
-		//if(!parceiroVO.asString("AD_PONTOREFERENCIA").isEmpty())  { this.pontoReferencia       = parceiroVO.asString("AD_PONTOREFERENCIA"); } // Não permite pesquisa
-		//if(!parceiroVO.asString("ATIVO").isEmpty())               { this.ativo                 = parceiroVO.asString("ATIVO"); }              // Não permite pesquisa
-		//if(!parceiroVO.asString("CEP").isEmpty())                 { this.cep                   = parceiroVO.asString("CEP"); }                // Não permite pesquisa
-		//if(!parceiroVO.asString("CLASSIFICMS").isEmpty())         { this.classificacaoICMS     = parceiroVO.asString("CLASSIFICMS"); }        // Não permite pesquisa
-		//if(!parceiroVO.asString("CLIENTE").isEmpty())             { this.cliente               = parceiroVO.asString("CLIENTE"); }            // Não permite pesquisa
-		//if(!parceiroVO.asString("COMPLEMENTO").isEmpty())         { this.complemento           = parceiroVO.asString("COMPLEMENTO"); }        // Não permite pesquisa
-		//if(!parceiroVO.asString("DTULTCONTATO").isEmpty())        { this.dataUltimoContato     = parceiroVO.asString("DTULTCONTATO"); }       // Não permite pesquisa
-		//if(!parceiroVO.asString("FORNECEDOR").isEmpty())          { this.fornecedor            = parceiroVO.asString("FORNECEDOR"); }         // Não permite pesquisa
-		//if(!parceiroVO.asString("INSCMUN").isEmpty())             { this.im                    = parceiroVO.asString("INSCMUN"); }            // Não permite pesquisa
-		//if(!parceiroVO.asString("OBSERVACOES").isEmpty())         { this.observacoes           = parceiroVO.asString("OBSERVACOES"); }        // Não permite pesquisa
-		//if(!parceiroVO.asString("PERFILECONECT").isEmpty())       { this.perfil                = parceiroVO.asString("PERFILECONECT"); }      // Não permite pesquisa
-		//if(!parceiroVO.asString("RETEMISS").isEmpty())            { this.retemIss              = parceiroVO.asString("RETEMISS"); }           // Não permite pesquisa
-		//if(!parceiroVO.asString("TIPPESSOA").isEmpty())           { this.tipoPessoa            = parceiroVO.asString("TIPPESSOA"); }          // Não permite pesquisa
-		//if(!parceiroVO.asString("TRANSPORTADORA").isEmpty())      { this.transportadora        = parceiroVO.asString("TRANSPORTADORA"); }     // Não permite pesquisa
-		//if(!parceiroVO.asString("USUARIO").isEmpty())             { this.usuario               = parceiroVO.asString("USUARIO"); }            // Não permite pesquisa
+		if(parceiroVO.asString("CGC_CPF") != null && !parceiroVO.asString("CGC_CPF").isEmpty())               { this.cpf                   = parceiroVO.asString("CGC_CPF"); }
+		if(parceiroVO.asString("EMAIL") != null && !parceiroVO.asString("EMAIL").isEmpty())                   { this.email                 = parceiroVO.asString("EMAIL"); }
+		if(parceiroVO.asString("HOMEPAGE") != null && !parceiroVO.asString("HOMEPAGE").isEmpty())             { this.site                  = parceiroVO.asString("HOMEPAGE"); }
+		if(parceiroVO.asString("IDENTINSCESTAD") != null && !parceiroVO.asString("IDENTINSCESTAD").isEmpty()) { this.ie                    = parceiroVO.asString("IDENTINSCESTAD"); }
+		if(parceiroVO.asString("NOMEPARC") != null && !parceiroVO.asString("NOMEPARC").isEmpty())             { this.nomeParceiro          = parceiroVO.asString("NOMEPARC"); }
+		if(parceiroVO.asString("NUMEND") != null && !parceiroVO.asString("NUMEND").isEmpty())                 { this.numeroEndereco        = parceiroVO.asString("NUMEND"); }
+		if(parceiroVO.asString("RAZAOSOCIAL") != null && !parceiroVO.asString("RAZAOSOCIAL").isEmpty())       { this.razaoSocial           = parceiroVO.asString("RAZAOSOCIAL"); }
+		if(parceiroVO.asString("TELEFONE") != null && !parceiroVO.asString("TELEFONE").isEmpty())             { this.telefone              = parceiroVO.asString("TELEFONE"); }
+		//if(!parceiroVO.asString("AD_CLASSE_PARCEIRO").isEmpty())  { this.classeParceiro        = parceiroVO.asString("AD_CLASSE_PARCEIRO"); } // Nao permite pesquisa
+		//if(!parceiroVO.asString("AD_LIBERADO").isEmpty())         { this.cadastroLiberado      = parceiroVO.asString("AD_LIBERADO"); }        // Nao permite pesquisa
+		//if(!parceiroVO.asString("AD_PONTOREFERENCIA").isEmpty())  { this.pontoReferencia       = parceiroVO.asString("AD_PONTOREFERENCIA"); } // Nao permite pesquisa
+		//if(!parceiroVO.asString("ATIVO").isEmpty())               { this.ativo                 = parceiroVO.asString("ATIVO"); }              // Nao permite pesquisa
+		//if(!parceiroVO.asString("CEP").isEmpty())                 { this.cep                   = parceiroVO.asString("CEP"); }                // Nao permite pesquisa
+		//if(!parceiroVO.asString("CLASSIFICMS").isEmpty())         { this.classificacaoICMS     = parceiroVO.asString("CLASSIFICMS"); }        // Nao permite pesquisa
+		//if(!parceiroVO.asString("CLIENTE").isEmpty())             { this.cliente               = parceiroVO.asString("CLIENTE"); }            // Nao permite pesquisa
+		//if(!parceiroVO.asString("COMPLEMENTO").isEmpty())         { this.complemento           = parceiroVO.asString("COMPLEMENTO"); }        // Nao permite pesquisa
+		//if(!parceiroVO.asString("DTULTCONTATO").isEmpty())        { this.dataUltimoContato     = parceiroVO.asString("DTULTCONTATO"); }       // Nao permite pesquisa
+		//if(!parceiroVO.asString("FORNECEDOR").isEmpty())          { this.fornecedor            = parceiroVO.asString("FORNECEDOR"); }         // Nao permite pesquisa
+		//if(!parceiroVO.asString("INSCMUN").isEmpty())             { this.im                    = parceiroVO.asString("INSCMUN"); }            // Nao permite pesquisa
+		//if(!parceiroVO.asString("OBSERVACOES").isEmpty())         { this.observacoes           = parceiroVO.asString("OBSERVACOES"); }        // Nao permite pesquisa
+		//if(!parceiroVO.asString("PERFILECONECT").isEmpty())       { this.perfil                = parceiroVO.asString("PERFILECONECT"); }      // Nao permite pesquisa
+		//if(!parceiroVO.asString("RETEMISS").isEmpty())            { this.retemIss              = parceiroVO.asString("RETEMISS"); }           // Nao permite pesquisa
+		//if(!parceiroVO.asString("TIPPESSOA").isEmpty())           { this.tipoPessoa            = parceiroVO.asString("TIPPESSOA"); }          // Nao permite pesquisa
+		//if(!parceiroVO.asString("TRANSPORTADORA").isEmpty())      { this.transportadora        = parceiroVO.asString("TRANSPORTADORA"); }     // Nao permite pesquisa
+		//if(!parceiroVO.asString("USUARIO").isEmpty())             { this.usuario               = parceiroVO.asString("USUARIO"); }            // Nao permite pesquisa
 
 		json = gson.toJson(this);		
 		return json;
