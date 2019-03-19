@@ -18,21 +18,29 @@ public class UpdateSql implements EventoProgramavelJava{
 	private String urlTeste 	  = "http://127.0.0.1:8080/api/financial/sankhya/";
 	private String urlHomologacao = "http://app.zapgrafica.com.br:8081/api/financial/sankhya/";
 	private String urlProducao 	  = "http://snk-integrations-api-dev.sa-east-1.elasticbeanstalk.com:8080/api/financial/sankhya/";
-	
+	private int codUsuarioIntegracaoHomologacao = 0;
+	private int codUsuarioIntegracaoProducao = 0;
 	private void financial(PersistenceEvent persistenceEvent) throws Exception 
 	{
 		DynamicVO financialVO = (DynamicVO) persistenceEvent.getVo();
 		
-		if(persistenceEvent.getEntityProperty("DHBAIXA") != null && financialVO.asInt("RECDESP")==1)
-		{
-			int negotiationType = this.getNegotiationType(persistenceEvent, financialVO.asInt("NUNOTA"));
-			
-			if(negotiationType >= 200 && negotiationType <= 213)
+		int codUsuarioBaixa = Integer.parseInt(financialVO.getProperty("CODUSUBAIXA").toString());
+		
+		//verifica se o usuário que está fazendo a modificação é o usuário da integração
+		//Se for não atualiza o financeiro nos bancos de dados
+		//if(codUsuarioBaixa != codUsuarioIntegracaoHomologacao)
+		//{
+			if(persistenceEvent.getEntityProperty("DHBAIXA") != null && financialVO.asInt("RECDESP")==1)
 			{
-				String url = urlHomologacao+financialVO.asBigDecimal("NUFIN").toString();
-				IntegrationApi.send(url, "", "POST");
+				int negotiationType = this.getNegotiationType(persistenceEvent, financialVO.asInt("NUNOTA"));
+				
+				if(negotiationType >= 200 && negotiationType <= 213)
+				{
+					String url = urlHomologacao+financialVO.asBigDecimal("NUFIN").toString();
+					IntegrationApi.send(url, "", "POST");
+				}
 			}
-		}
+		//}//Fim IF usuarioIntegracao
 	}
 	
 	private int getNegotiationType(PersistenceEvent persistenceEvent, int nunota) throws Exception
