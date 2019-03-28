@@ -1,9 +1,6 @@
 package br.com.goup.snkcustomevents.financial;
 
-import java.math.BigDecimal;
 import java.sql.ResultSet;
-
-import com.sankhya.util.StringUtils;
 
 import br.com.sankhya.extensions.eventoprogramavel.EventoProgramavelJava;
 import br.com.sankhya.jape.dao.JdbcWrapper;
@@ -11,23 +8,26 @@ import br.com.sankhya.jape.event.PersistenceEvent;
 import br.com.sankhya.jape.event.TransactionContext;
 import br.com.sankhya.jape.sql.NativeSql;
 import br.com.sankhya.jape.vo.DynamicVO;
+import br.com.goup.snkcustomevents.SnkIntegrationsApi;
 import br.com.goup.snkcustomevents.utils.IntegrationApi;
 
-public class UpdateSql implements EventoProgramavelJava{
+public class UpdateSql extends SnkIntegrationsApi implements EventoProgramavelJava{
+
+	//private int codUsuarioIntegracaoHomologacao = 0;
+	//private int codUsuarioIntegracaoProducao = 0;
 	
-	private String urlTeste 	  = "http://127.0.0.1:8080/api/financial/sankhya/";
-	private String urlHomologacao = "http://app.zapgrafica.com.br:8081/api/financial/sankhya/";
-	private String urlProducao 	  = "http://snk-integrations-api-dev.sa-east-1.elasticbeanstalk.com:8080/api/financial/sankhya/";
-	private int codUsuarioIntegracaoHomologacao = 0;
-	private int codUsuarioIntegracaoProducao = 0;
-	private void financial(PersistenceEvent persistenceEvent) throws Exception 
-	{
+	public UpdateSql() {
+		//this.forceUrl("ProductionTest"); // OpÃ§Ãµes: LocalTest, ProductionTest, AllTest, Production
+	}
+
+	private void financial(PersistenceEvent persistenceEvent) throws Exception {
+
 		DynamicVO financialVO = (DynamicVO) persistenceEvent.getVo();
 		
-		int codUsuarioBaixa = Integer.parseInt(financialVO.getProperty("CODUSUBAIXA").toString());
+		//int codUsuarioBaixa = Integer.parseInt(financialVO.getProperty("CODUSUBAIXA").toString());
 		
-		//verifica se o usuário que está fazendo a modificação é o usuário da integração
-		//Se for não atualiza o financeiro nos bancos de dados
+		//verifica se o usuï¿½rio que estï¿½ fazendo a modificaï¿½ï¿½o ï¿½ o usuï¿½rio da integraï¿½ï¿½o
+		//Se for nï¿½o atualiza o financeiro nos bancos de dados
 		//if(codUsuarioBaixa != codUsuarioIntegracaoHomologacao)
 		//{
 			if(persistenceEvent.getEntityProperty("DHBAIXA") != null && financialVO.asInt("RECDESP")==1)
@@ -36,7 +36,7 @@ public class UpdateSql implements EventoProgramavelJava{
 				
 				if(negotiationType >= 200 && negotiationType <= 213)
 				{
-					String url = urlHomologacao+financialVO.asBigDecimal("NUFIN").toString();
+					String url = this.urlApi+"/financial/sankhya/"+financialVO.asBigDecimal("NUFIN").toString();
 					IntegrationApi.send(url, "", "POST");
 				}
 			}
@@ -75,7 +75,7 @@ public class UpdateSql implements EventoProgramavelJava{
 	@Override
 	public void afterInsert(PersistenceEvent arg0) throws Exception {
 		// TODO Auto-generated method stub
-		
+		financial(arg0);
 	}
 
 	@Override

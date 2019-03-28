@@ -1,42 +1,38 @@
-package br.com.goup.snkcustomevents.partners;
+package br.com.goup.snkcustomevents.financial;
 
-import br.com.goup.snkcustomevents.SnkIntegrationsApi;
-import br.com.goup.snkcustomevents.domain.Parceiro;
-import br.com.goup.snkcustomevents.utils.IntegrationApi;
 import br.com.sankhya.extensions.eventoprogramavel.EventoProgramavelJava;
 import br.com.sankhya.jape.event.PersistenceEvent;
 import br.com.sankhya.jape.event.TransactionContext;
 import br.com.sankhya.jape.vo.DynamicVO;
+import br.com.goup.snkcustomevents.SnkIntegrationsApi;
+import br.com.goup.snkcustomevents.utils.IntegrationApi;
 
-public class Update extends SnkIntegrationsApi implements EventoProgramavelJava {
+public class UpdateTef extends SnkIntegrationsApi implements EventoProgramavelJava{
 	
-	public Update() {
-		//this.forceUrl("AllTest"); // Opções: LocalTest, ProductionTest, AllTest, Production
+	public UpdateTef() {
+		//this.forceUrl("ProductionTest"); // Opções: LocalTest, ProductionTest, AllTest, Production
 	}
 	
-	public void partner(PersistenceEvent persistenceEvent) throws Exception {
-
-		Parceiro parceiro    = new Parceiro();
-		DynamicVO parceiroVO = (DynamicVO) persistenceEvent.getVo();
-		String json          = parceiro.getJsonUpdatePartner(parceiroVO);
-		String url           = this.urlApi+"/register/partners";
-		IntegrationApi.send(url, json, "PUT");
+	private void sendDataTef(PersistenceEvent persistenceEvent) throws Exception {
+		DynamicVO tefVO = (DynamicVO) persistenceEvent.getVo();
+		String url      = this.urlApi+"/financial/sankhya/"+tefVO.asBigDecimal("NUFIN").toString();
+		IntegrationApi.send(url, "", "POST");
 	}
-
+	
 	@Override
 	public void afterDelete(PersistenceEvent arg0) throws Exception {
-		// TODO Auto-generated method stub
-	}
-
-	@Override
-	public void afterInsert(PersistenceEvent arg0) throws Exception {
 		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
+	public void afterInsert(PersistenceEvent arg0) throws Exception {
+		sendDataTef(arg0);
+	}
+
+	@Override
 	public void afterUpdate(PersistenceEvent arg0) throws Exception {
-		partner(arg0);
+		sendDataTef(arg0);
 	}
 
 	@Override
@@ -62,5 +58,4 @@ public class Update extends SnkIntegrationsApi implements EventoProgramavelJava 
 		// TODO Auto-generated method stub
 		
 	}
-
 }
