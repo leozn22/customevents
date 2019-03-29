@@ -4,6 +4,9 @@ import br.com.sankhya.extensions.eventoprogramavel.EventoProgramavelJava;
 import br.com.sankhya.jape.event.PersistenceEvent;
 import br.com.sankhya.jape.event.TransactionContext;
 import br.com.sankhya.jape.vo.DynamicVO;
+
+import java.util.Collection;
+
 import br.com.goup.snkcustomevents.SnkIntegrationsApi;
 import br.com.goup.snkcustomevents.utils.IntegrationApi;
 
@@ -14,8 +17,26 @@ public class UpdateTef extends SnkIntegrationsApi implements EventoProgramavelJa
 	}
 	
 	private void sendDataTef(PersistenceEvent persistenceEvent) throws Exception {
-		DynamicVO tefVO = (DynamicVO) persistenceEvent.getVo();
-		String url      = this.urlApi+"/financial/sankhya/"+tefVO.asBigDecimal("NUFIN").toString();
+		
+		try {
+			DynamicVO tefVO   = (DynamicVO) persistenceEvent.getVo();
+			String confirmado = "N";
+			
+			if(tefVO.asString("CONFIRMADO") != null && !tefVO.asString("CONFIRMADO").isEmpty()) { confirmado = tefVO.asString("CONFIRMADO"); }
+			
+			if(confirmado.equals("S")) {
+				String url = this.urlApi+"/financial/sankhya/tef/"+tefVO.asBigDecimal("NUFIN").toString();
+				IntegrationApi.send(url, "", "POST");
+			}
+		}
+		catch(Exception e) {
+			throw new Exception("Mensagem de erro: "+e.getMessage());
+		}
+	}
+	
+	public void actionSendDataTef() throws Exception {
+		
+		String url = this.urlApi+"/financial/sankhya/tef/sincronize";
 		IntegrationApi.send(url, "", "POST");
 	}
 	
