@@ -1,5 +1,6 @@
 package br.com.goup.snkcustomevents.partners;
 
+import br.com.goup.snkcustomevents.SnkIntegrationsApi;
 import br.com.goup.snkcustomevents.domain.Parceiro;
 import br.com.goup.snkcustomevents.utils.IntegrationApi;
 import br.com.sankhya.extensions.eventoprogramavel.EventoProgramavelJava;
@@ -7,19 +8,18 @@ import br.com.sankhya.jape.event.PersistenceEvent;
 import br.com.sankhya.jape.event.TransactionContext;
 import br.com.sankhya.jape.vo.DynamicVO;
 
-public class Update implements EventoProgramavelJava {
+public class Update extends SnkIntegrationsApi implements EventoProgramavelJava {
+	
+	public Update() {
+		//this.forceUrl("AllTest"); // Opções: LocalTest, ProductionTest, AllTest, Production
+	}
 	
 	public void partner(PersistenceEvent persistenceEvent) throws Exception {
-		
-		// TODO identificar a porta da URL automaticamente
+
 		Parceiro parceiro    = new Parceiro();
-		String url           = "";
 		DynamicVO parceiroVO = (DynamicVO) persistenceEvent.getVo();
 		String json          = parceiro.getJsonUpdatePartner(parceiroVO);
-		url = "http://snk-integrations-api-dev.sa-east-1.elasticbeanstalk.com:8080/api/register/partners"; // PRODUCAO
-		//url = "http://127.0.0.1:8080/api/register/partners";                              // TESTE LOCAL
-		//url = "http://app.zapgrafica.com.br:8080/api/register/partners";                  // HOMOLOGACAO
-		
+		String url           = this.urlApi+"/register/partners";
 		IntegrationApi.send(url, json, "PUT");
 	}
 
