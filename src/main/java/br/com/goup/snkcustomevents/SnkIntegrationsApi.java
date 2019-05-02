@@ -65,6 +65,6 @@ abstract public class SnkIntegrationsApi {
 	
 	// Todas as bases de produção
 	protected String getUrlProduction() {
-		return this.urlApi = "http://snk-integrations-api-dev.sa-east-1.elasticbeanstalk.com:8080/api";
+		return this.urlApi = "http://api-odin.sa-east-1.elasticbeanstalk.com:8080/api";
 	}
 }
