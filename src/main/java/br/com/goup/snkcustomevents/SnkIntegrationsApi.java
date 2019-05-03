@@ -18,7 +18,7 @@ abstract public class SnkIntegrationsApi {
 
 	protected SnkIntegrationsApi() { 
 		this.urlApi = this.getUrlProduction();
-		this.forceUrl("AllTest"); // Opções: LocalTest, ProductionTest, AllTest, Production
+		//this.forceUrl("AllTest"); // Opções: LocalTest, ProductionTest, AllTest, Production
 	}
 	
 	/**
@@ -55,12 +55,12 @@ abstract public class SnkIntegrationsApi {
 	
 	// Híbrido (base de teste Sankhya, base de produção: Mysql e SQL Server)
 	protected String getUrlProductionTest() {
-		return this.urlApi = "http://app.zapgrafica.com.br:8080/api";
+		return this.urlApi = "http://api-odin-hom.sa-east-1.elasticbeanstalk.com:8080/api";
 	}
 	
 	// Todas as bases de teste
 	protected String getUrlAllTest() {
-		return this.urlApi = "http://app.zapgrafica.com.br:8081/api";
+		return this.urlApi = "http://app.zapgrafica.com.br:8080/api";
 	}
 	
 	// Todas as bases de produção
