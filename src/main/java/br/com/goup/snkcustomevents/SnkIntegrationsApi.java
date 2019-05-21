@@ -17,8 +17,8 @@ abstract public class SnkIntegrationsApi {
 	protected String urlApi;
 
 	protected SnkIntegrationsApi() { 
-		this.urlApi = this.getUrlProduction();
-		//this.forceUrl("AllTest"); // Opções: LocalTest, ProductionTest, AllTest, Production
+		this.forceUrl("Production"); // Opções: LocalTest, ProductionTest, AllTest, Production
+		//this.urlApi = "http://app.zapgrafica.com.br:8081/api";
 	}
 	
 	/**
