@@ -26,10 +26,13 @@ public class ActiveService extends SnkIntegrationsApi implements EventoProgramav
 		if(cabVO.containsProperty("CODTIPOPER")) {
 			tipoOperacao = cabVO.getProperty("CODTIPOPER").toString();
 		}
-		if(cabVO.containsProperty("STATUSNOTA")) {
+		if(cabVO.containsProperty("STATUSNOTA")) { 	
 			statusNota = cabVO.getProperty("STATUSNOTA").toString();
 		}
 		
+	  if (true) {
+		  throw new Exception("Teste1dsdsTeste");
+	  }
 		
 		if(statusNota.equals("L") && tipoOperacao.equals("2100")) {
 			String nunota = cabVO.getProperty("NUNOTA").toString();		
@@ -88,11 +91,11 @@ public class ActiveService extends SnkIntegrationsApi implements EventoProgramav
 		if(statusNota.equals("L") && tipoOperacao.equals("2100")) {
 			String url = urlApi+"/service/products/active/"+nunota;
 			IntegrationApi.send(url,"", "POST");
-			contexto.setMensagemRetorno("Solicitação de atualização de estoque do site enviada com sucesso!");
+			contexto.setMensagemRetorno("Solicitaï¿½ï¿½o de atualizaï¿½ï¿½o de estoque do site enviada com sucesso!");
 		}
 		else
 		{
-			contexto.setMensagemRetorno("Para ativar o serviço no site o tipo de operação precisa ser 2100 e a nota precisa estar confirmada!");
+			contexto.setMensagemRetorno("Para ativar o serviï¿½o no site o tipo de operaï¿½ï¿½o precisa ser 2100 e a nota precisa estar confirmada!");
 		}
 	}
 }
