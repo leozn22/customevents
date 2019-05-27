@@ -1,10 +1,8 @@
 package br.com.goup.snkcustomevents.orders;
 
-
 import br.com.goup.snkcustomevents.SnkIntegrationsApi;
 import br.com.goup.snkcustomevents.utils.IntegrationApi;
 import br.com.sankhya.extensions.eventoprogramavel.EventoProgramavelJava;
-import br.com.sankhya.jape.event.ModifingFields;
 import br.com.sankhya.jape.event.PersistenceEvent;
 import br.com.sankhya.jape.event.TransactionContext;
 import br.com.sankhya.jape.vo.DynamicVO;
@@ -29,10 +27,6 @@ public class ActiveService extends SnkIntegrationsApi implements EventoProgramav
 		if(cabVO.containsProperty("STATUSNOTA")) { 	
 			statusNota = cabVO.getProperty("STATUSNOTA").toString();
 		}
-		
-	  if (true) {
-		  throw new Exception("Teste1dsdsTeste");
-	  }
 		
 		if(statusNota.equals("L") && tipoOperacao.equals("2100")) {
 			String nunota = cabVO.getProperty("NUNOTA").toString();		
@@ -91,11 +85,16 @@ public class ActiveService extends SnkIntegrationsApi implements EventoProgramav
 		if(statusNota.equals("L") && tipoOperacao.equals("2100")) {
 			String url = urlApi+"/service/products/active/"+nunota;
 			IntegrationApi.send(url,"", "POST");
-			contexto.setMensagemRetorno("Solicita��o de atualiza��o de estoque do site enviada com sucesso!");
+			String mensagem = "Solicitacao de atualizacao de estoque do site enviada com sucesso!";
+			//String mensagemUTF8 = new String(mensagem.getBytes(Charset.forName("UTF-8")));
+			contexto.setMensagemRetorno(mensagem);
+			
 		}
 		else
 		{
-			contexto.setMensagemRetorno("Para ativar o servi�o no site o tipo de opera��o precisa ser 2100 e a nota precisa estar confirmada!");
+			String mensagem = "Para ativar o servico no site o tipo de operacao precisa ser 2100 e a nota precisa estar confirmada!";
+			//String mensagemUTF8 = new String(mensagem.getBytes(Charset.forName("UTF-8")));
+			contexto.setMensagemRetorno(mensagem);
 		}
 	}
 }
