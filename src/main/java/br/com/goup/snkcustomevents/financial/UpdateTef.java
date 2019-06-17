@@ -1,14 +1,11 @@
 package br.com.goup.snkcustomevents.financial;
 
+import br.com.goup.snkcustomevents.SnkIntegrationsApi;
+import br.com.goup.snkcustomevents.utils.IntegrationApi;
 import br.com.sankhya.extensions.eventoprogramavel.EventoProgramavelJava;
 import br.com.sankhya.jape.event.PersistenceEvent;
 import br.com.sankhya.jape.event.TransactionContext;
 import br.com.sankhya.jape.vo.DynamicVO;
-
-import java.util.Collection;
-
-import br.com.goup.snkcustomevents.SnkIntegrationsApi;
-import br.com.goup.snkcustomevents.utils.IntegrationApi;
 
 public class UpdateTef extends SnkIntegrationsApi implements EventoProgramavelJava{
 	
