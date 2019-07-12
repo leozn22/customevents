@@ -21,7 +21,7 @@ abstract public class SnkIntegrationsApi {
 	}
 	
 	/**
-	 * @param String typeUrl, opções: LocalTest, ProductionTest, AllTest, Production
+//	 * @param String typeUrl, opções: LocalTest, ProductionTest, AllTest, Production
 	 * @return String
 	 */
 	protected String forceUrl(String typeUrl) {
@@ -65,5 +65,9 @@ abstract public class SnkIntegrationsApi {
 	// Todas as bases de produção
 	protected String getUrlProduction() {
 		return this.urlApi = "http://api-odin.sa-east-1.elasticbeanstalk.com:8080/api";
+	}
+
+	protected String getUrl(){
+		return 	"http://api-odin-hom.sa-east-1.elasticbeanstalk.com:8080";
 	}
 }
