@@ -15,13 +15,14 @@ package br.com.goup.snkcustomevents;
 abstract public class SnkIntegrationsApi {
 
 	protected String urlApi;
+	protected boolean exigeAutenticacao = false;
 
 	protected SnkIntegrationsApi() { 
 		this.forceUrl("AllTest"); // Opções: LocalTest, ProductionTest, AllTest, Production
 	}
 	
 	/**
-//	 * @param String typeUrl, opções: LocalTest, ProductionTest, AllTest, Production
+	 * @param String typeUrl, opções: LocalTest, ProductionTest, AllTest, Production
 	 * @return String
 	 */
 	protected String forceUrl(String typeUrl) {
@@ -49,25 +50,41 @@ abstract public class SnkIntegrationsApi {
 	
 	// Teste Local
 	protected String getUrlLocalTest() {
-		return this.urlApi = "http://127.0.0.1:8080/api"; // Teste Local
+		this.urlApi = "http://127.0.0.1:8080"; // Teste Local
+		if(!this.exigeAutenticacao) {
+			this.urlApi+= "/api";
+		}
+		return this.urlApi;
 	}
 	
 	// Híbrido (base de teste Sankhya, base de produção: Mysql e SQL Server)
 	protected String getUrlProductionTest() {
-		return this.urlApi = "http://api-odin-hom.sa-east-1.elasticbeanstalk.com:8080/api";
+		this.urlApi = "http://api-odin-hom.sa-east-1.elasticbeanstalk.com:8080";
+		if(!this.exigeAutenticacao) {
+			this.urlApi+= "/api";
+		}
+		return this.urlApi;
 	}
 	
 	// Todas as bases de teste
 	protected String getUrlAllTest() {
-		return this.urlApi = "http://app.zapgrafica.com.br:8080/api";
+		this.urlApi = "http://app.zapgrafica.com.br:8080";
+		if(!this.exigeAutenticacao) {
+			this.urlApi+= "/api";
+		}
+		return this.urlApi;
 	}
 	
 	// Todas as bases de produção
 	protected String getUrlProduction() {
-		return this.urlApi = "http://api-odin.sa-east-1.elasticbeanstalk.com:8080/api";
+		this.urlApi = "http://api-odin.sa-east-1.elasticbeanstalk.com:8080";
+		if(!this.exigeAutenticacao) {
+			this.urlApi+= "/api";
+		}
+		return this.urlApi;
 	}
 
 	protected String getUrl(){
-		return 	"http://api-odin-hom.sa-east-1.elasticbeanstalk.com:8080";
+		return "http://api-odin-hom.sa-east-1.elasticbeanstalk.com:8080";
 	}
 }
