@@ -58,6 +58,18 @@ public class SincronizacaoPromessa extends SnkIntegrationsApi implements EventoP
 			acao = "ConfirmarDeposito";
 		}
 		
+		if(dynVO.asString("STATUSPEDIDO").equals("CA") && dynVO.asString("STATUSPROMESSA").equals("CA")) {
+			acao = "CancelarDeposito";
+		}
+		
+		if(dynVO.asString("STATUSPEDIDO").equals("PE") && dynVO.asString("STATUSPROMESSA").equals("NE")) {
+			acao = "NegarDeposito";
+		}
+		
+		if(dynVO.asString("STATUSPEDIDO").equals("LI") && dynVO.asString("STATUSPROMESSA").equals("PE")) {
+			acao = "LiberarPedido";
+		}
+		
 		return acao;
 	}
 	
@@ -70,8 +82,26 @@ public class SincronizacaoPromessa extends SnkIntegrationsApi implements EventoP
 		switch (acao) {
 			case "ConfirmarDeposito":
 				metodo = "PUT";
-				json   = this.getJsonConfirmaDeposito(persistenceEvent);
+				json   = this.getJsonDeposito(persistenceEvent, "");
 				url    = this.urlApi+"/v2/promessas/deposito";
+				break;
+
+			case "CancelarDeposito":
+				metodo = "DELETE";
+				json   = this.getJsonDeposito(persistenceEvent, "CANCELADO");
+				url    = this.urlApi+"/v2/promessas/deposito";
+				break;
+
+			case "NegarDeposito":
+				metodo = "DELETE";
+				json   = this.getJsonDeposito(persistenceEvent, "NEGADO");
+				url    = this.urlApi+"/v2/promessas/deposito";
+				break;
+
+			case "LiberarPedido":
+				metodo = "PUT";
+				json   = this.getJsonDeposito(persistenceEvent, "");
+				url    = this.urlApi+"/v2/promessas/pedido";
 				break;
 	
 			default:
@@ -90,7 +120,7 @@ public class SincronizacaoPromessa extends SnkIntegrationsApi implements EventoP
 		return retorno;
 	}
 	
-	private String getJsonConfirmaDeposito(PersistenceEvent persistenceEvent) throws Exception {
+	private String getJsonDeposito(PersistenceEvent persistenceEvent, String situacaoComprovante) throws Exception {
 		
 		DynamicVO dynVO   = (DynamicVO) persistenceEvent.getVo();
 		BigDecimal nunota = dynVO.asBigDecimal("NUNOTA");
@@ -117,6 +147,7 @@ public class SincronizacaoPromessa extends SnkIntegrationsApi implements EventoP
 			
 			retorno = "{"
 					+ "    'numnota': "+numnota+", "
+					+ "    'situacaoComprovante': '"+situacaoComprovante+"', "
 					+ "    'codigoParceiro': "+codigoParceiro+""
 					+ "}";
 		}
