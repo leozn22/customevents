@@ -22,15 +22,24 @@ public class SincronizacaoPromessa extends SnkIntegrationsApi implements EventoP
 	private void enviarDados(PersistenceEvent persistenceEvent) throws Exception {
 		
 		try {
-			DynamicVO dynVO = (DynamicVO) persistenceEvent.getVo();
-			this.validarParametros(dynVO);
-			String acao = this.validarAcao(dynVO);
+			DynamicVO dynVO     = (DynamicVO) persistenceEvent.getVo();
+			String sincronizado = "N";
 			
-			if(acao.isEmpty()) {
-				System.out.println("Não foi possível identificar a ação de sincronização desejada!");
-			}
+			try {
+				sincronizado = dynVO.asString("AD_TZACONF");
+			} 
+			catch (Exception e) { sincronizado = "N"; }
+			
+			if(sincronizado != null && !sincronizado.equals("S")) {
+				this.validarParametros(dynVO);
+				String acao = this.validarAcao(dynVO);
+				
+				if(acao.isEmpty()) {
+					System.out.println("Não foi possível identificar a ação de sincronização desejada!");
+				}
 
-			this.executarAcao(acao, persistenceEvent);
+				this.executarAcao(acao, persistenceEvent);	
+			}
 		}
 		catch(Exception e) {
 			throw new Exception("Mensagem de erro: "+e.getMessage());
