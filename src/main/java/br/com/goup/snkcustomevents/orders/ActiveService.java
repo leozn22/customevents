@@ -6,9 +6,12 @@ import br.com.sankhya.extensions.actionbutton.AcaoRotinaJava;
 import br.com.sankhya.extensions.actionbutton.ContextoAcao;
 import br.com.sankhya.extensions.actionbutton.Registro;
 import br.com.sankhya.extensions.eventoprogramavel.EventoProgramavelJava;
+import br.com.sankhya.jape.core.JapeSession;
 import br.com.sankhya.jape.event.PersistenceEvent;
 import br.com.sankhya.jape.event.TransactionContext;
 import br.com.sankhya.jape.vo.DynamicVO;
+
+import java.math.BigDecimal;
 
 
 public class ActiveService extends SnkIntegrationsApi implements EventoProgramavelJava,AcaoRotinaJava  {
@@ -17,19 +20,10 @@ public class ActiveService extends SnkIntegrationsApi implements EventoProgramav
 		
 		//ModifingFields modifingFields = persistenceEvent.getModifingFields();
 		DynamicVO cabVO = (DynamicVO) persistenceEvent.getVo();
-		
-		String tipoOperacao = "";
-		String statusNota = "";
-		
-		if(cabVO.containsProperty("CODTIPOPER")) {
-			tipoOperacao = cabVO.getProperty("CODTIPOPER").toString();
-		}
-		if(cabVO.containsProperty("STATUSNOTA")) { 	
-			statusNota = cabVO.getProperty("STATUSNOTA").toString();
-		}
-		
-		if(statusNota.equals("L") && tipoOperacao.equals("2100")) {
-			String nunota = cabVO.getProperty("NUNOTA").toString();		
+		Boolean confirmando = (Boolean) JapeSession.getProperty("CabecalhoNota.confirmando.nota",false);
+
+		if( ( confirmando || "L".equals(cabVO.asString("STATUSNOTA")) ) && cabVO.asBigDecimal("CODTIPOPER").compareTo(BigDecimal.valueOf(2100)) == 0) {
+			String nunota = cabVO.getProperty("NUNOTA").toString();
 			String url = urlApi+"/service/products/active/"+nunota;
 			IntegrationApi.send(url,"", "POST");
 		}
