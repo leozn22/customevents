@@ -11,6 +11,7 @@ import br.com.sankhya.jape.event.TransactionContext;
 import br.com.sankhya.jape.vo.DynamicVO;
 
 import java.math.BigDecimal;
+import java.util.Calendar;
 
 public class RetornoBoletoSite  extends SnkIntegrationsApi implements EventoProgramavelJava {
 
@@ -34,12 +35,14 @@ public class RetornoBoletoSite  extends SnkIntegrationsApi implements EventoProg
                 && eOperacaoVendaIntegracao);
     }
 
-    private String getJsonProcessoRetornoBoleto(Integer idFinanceiro) {
+    private String getJsonProcessoRetornoBoleto(Integer idFinanceiro, String dataBaixa, String valorBaixa) {
 
         String retorno = "{"
                 + "'processo': 'processo.sincronizarRetornoBoleto',"
                 + "'parametros': {"
-                + "  'idFinanceiro': '" + idFinanceiro.toString() + "'"
+                + "  'idFinanceiro': '" + idFinanceiro.toString() + "',"
+                + "  'dataBaixa': '" + dataBaixa + "',"
+                + "  'valorBaixa': '" + valorBaixa + "'"
                 + "  }"
                 + "}";
 
@@ -55,7 +58,9 @@ public class RetornoBoletoSite  extends SnkIntegrationsApi implements EventoProg
             if (modifingFields.isModifing("DHBAIXA")
                     && modifingFields.getNewValue("DHBAIXA") != null
                     && this.eBoletoSiteBaixado(financeiro)) {
-                String json  = this.getJsonProcessoRetornoBoleto(financeiro.asBigDecimal("NUFIN").intValue());
+                String json  = this.getJsonProcessoRetornoBoleto(financeiro.asBigDecimal("NUFIN").intValue(),
+                        modifingFields.getNewValue("DHBAIXA").toString(),
+                        modifingFields.getNewValue("VLRBAIXA").toString());
                 String url   = this.urlApi + "/v2/processos";
                 String token = IntegrationApi.getToken(this.urlApi + "/oauth/token?grant_type=client_credentials", "POST", "Basic c2Fua2h5YXc6U0Bua2h5QDJV");
                 IntegrationApi.sendHttp(url, json, "POST", "Bearer " + token);
