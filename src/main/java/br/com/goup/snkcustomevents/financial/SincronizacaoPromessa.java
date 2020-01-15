@@ -16,7 +16,7 @@ public class SincronizacaoPromessa extends SnkIntegrationsApi implements EventoP
 	
 	public SincronizacaoPromessa() {
 		this.exigeAutenticacao = true;
-		this.forceUrl("AllTest"); // Opções: LocalTest, ProductionTest, AllTest, Production
+		this.forceUrl("ProductionTest"); // Opções: LocalTest, ProductionTest, AllTest, Production
 	}
 	
 	private void enviarDados(PersistenceEvent persistenceEvent) throws Exception {
