@@ -16,7 +16,7 @@ public class SincronizacaoPromessa extends SnkIntegrationsApi implements EventoP
 	
 	public SincronizacaoPromessa() {
 		this.exigeAutenticacao = true;
-		this.forceUrl("ProductionTest"); // Opções: LocalTest, ProductionTest, AllTest, Production
+		this.forceUrl("AllTest"); // Opções: LocalTest, ProductionTest, AllTest, Production
 	}
 	
 	private void enviarDados(PersistenceEvent persistenceEvent) throws Exception {
@@ -60,10 +60,12 @@ public class SincronizacaoPromessa extends SnkIntegrationsApi implements EventoP
 		}
 	}
 	
-	private String validarAcao(DynamicVO dynVO) {
-		String acao = "";
+	private String validarAcao(DynamicVO dynVO) throws Exception {
+		String acao           = "";
+		String numeroDeposito = dynVO.asString("NRODESPOSITO");
+		boolean temDeposito   = (numeroDeposito != null && numeroDeposito != "") ? true : false;
 		
-		if(dynVO.asString("STATUSPEDIDO").equals("LI") && dynVO.asString("STATUSPROMESSA").equals("CO")) {
+		if(dynVO.asString("STATUSPEDIDO").equals("LI") && dynVO.asString("STATUSPROMESSA").equals("CO") && temDeposito) {
 			acao = "ConfirmarDeposito";
 		}
 		
@@ -75,9 +77,17 @@ public class SincronizacaoPromessa extends SnkIntegrationsApi implements EventoP
 			acao = "NegarDeposito";
 		}
 		
-		if(dynVO.asString("STATUSPEDIDO").equals("LI") && dynVO.asString("STATUSPROMESSA").equals("PE")) {
+		// Na tela de promessa antiga liberava o pedido se o status da promessa estivesse pendente, clicando no botão Liberar Pedido.
+		// Agora, o nome do botão é Liberar Boleto, só que o status que chega é confirmado, como na confirmação de depósito, a diferença
+		// é que no caso do boleto não tem o número do depósito.
+		if(dynVO.asString("STATUSPEDIDO").equals("LI") && dynVO.asString("STATUSPROMESSA").equals("CO") && !temDeposito) {
 			acao = "LiberarPedido";
 		}
+		
+		// if(true) {
+		// 	String msg = "GERAL\n - STATUSPEDIDO: "+dynVO.asString("STATUSPEDIDO")+"\n - STATUSPROMESSA: "+dynVO.asString("STATUSPROMESSA")+"\n - NRODESPOSITO: "+numeroDeposito+"\n - temDeposito: "+temDeposito;
+		// 	throw new Exception(msg+"\n - dynVO: "+dynVO);
+		// }
 		
 		return acao;
 	}
