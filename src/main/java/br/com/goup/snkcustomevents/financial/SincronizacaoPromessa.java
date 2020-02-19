@@ -61,11 +61,15 @@ public class SincronizacaoPromessa extends SnkIntegrationsApi implements EventoP
 	}
 	
 	private String validarAcao(DynamicVO dynVO) throws Exception {
-		String acao           = "";
-		String numeroDeposito = dynVO.asString("NRODESPOSITO");
-		boolean temDeposito   = (numeroDeposito != null && numeroDeposito != "") ? true : false;
+		String acao              = "";
+		String numeroDeposito    = dynVO.asString("NRODESPOSITO");
+		boolean temDeposito      = (numeroDeposito != null && numeroDeposito != "") ? true : false;
+		BigDecimal valorDeposito = dynVO.asBigDecimal("VALORDEPOSITO");
 		
-		if(dynVO.asString("STATUSPEDIDO").equals("LI") && dynVO.asString("STATUSPROMESSA").equals("CO") && temDeposito) {
+		if(
+				dynVO.asString("STATUSPEDIDO").equals("LI") 
+				&& (dynVO.asString("STATUSPROMESSA").equals("CO") || (dynVO.asString("STATUSPROMESSA").equals("PE") && valorDeposito.compareTo(BigDecimal.ZERO) > 0)) 
+				&& temDeposito) {
 			acao = "ConfirmarDeposito";
 		}
 		
@@ -84,10 +88,10 @@ public class SincronizacaoPromessa extends SnkIntegrationsApi implements EventoP
 			acao = "LiberarPedido";
 		}
 		
-		// if(true) {
-		// 	String msg = "GERAL\n - STATUSPEDIDO: "+dynVO.asString("STATUSPEDIDO")+"\n - STATUSPROMESSA: "+dynVO.asString("STATUSPROMESSA")+"\n - NRODESPOSITO: "+numeroDeposito+"\n - temDeposito: "+temDeposito;
-		// 	throw new Exception(msg+"\n - dynVO: "+dynVO);
-		// }
+//		if(true) {
+//			String msg = "GERAL\\n - Ação "+acao+" \\n - STATUSPEDIDO: "+dynVO.asString("STATUSPEDIDO")+"\\n - STATUSPROMESSA: "+dynVO.asString("STATUSPROMESSA")+"\\n - NRODESPOSITO: "+numeroDeposito+"\\n - temDeposito: "+temDeposito;
+//			throw new Exception(msg+"\n - dynVO: "+dynVO);
+//		}
 		
 		return acao;
 	}
