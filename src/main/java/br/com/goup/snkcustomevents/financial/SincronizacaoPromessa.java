@@ -191,7 +191,10 @@ public class SincronizacaoPromessa extends SnkIntegrationsApi implements EventoP
 
 	@Override
 	public void afterUpdate(PersistenceEvent arg0) throws Exception {
-		enviarDados(arg0);
+		DynamicVO dynVO   = (DynamicVO) arg0.getVo();
+		if(!(dynVO.asString("STATUSPEDIDO").equals("LI") && dynVO.asString("STATUSPROMESSA").equals("PE"))) {
+			enviarDados(arg0);
+		}
 	}
 
 	@Override
