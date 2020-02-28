@@ -62,36 +62,44 @@ public class SincronizacaoPromessa extends SnkIntegrationsApi implements EventoP
 	
 	private String validarAcao(DynamicVO dynVO) throws Exception {
 		String acao              = "";
-		String numeroDeposito    = dynVO.asString("NRODESPOSITO");
-		boolean temDeposito      = (numeroDeposito != null && numeroDeposito != "") ? true : false;
-		BigDecimal valorDeposito = dynVO.asBigDecimal("VALORDEPOSITO");
-		
-		if(
-				dynVO.asString("STATUSPEDIDO").equals("LI") 
-				&& (dynVO.asString("STATUSPROMESSA").equals("CO") || (dynVO.asString("STATUSPROMESSA").equals("PE") && valorDeposito.compareTo(BigDecimal.ZERO) > 0)) 
-				&& temDeposito) {
-			acao = "ConfirmarDeposito";
-		}
-		
-		if(dynVO.asString("STATUSPEDIDO").equals("CA") && dynVO.asString("STATUSPROMESSA").equals("CA")) {
-			acao = "CancelarDeposito";
-		}
-		
-		if(dynVO.asString("STATUSPEDIDO").equals("PE") && dynVO.asString("STATUSPROMESSA").equals("NE")) {
-			acao = "NegarDeposito";
-		}
-		
-		// Na tela de promessa antiga liberava o pedido se o status da promessa estivesse pendente, clicando no botão Liberar Pedido.
-		// Agora, o nome do botão é Liberar Boleto, só que o status que chega é confirmado, como na confirmação de depósito, a diferença
-		// é que no caso do boleto não tem o número do depósito.
-		if(dynVO.asString("STATUSPEDIDO").equals("LI") && dynVO.asString("STATUSPROMESSA").equals("CO") && !temDeposito) {
-			acao = "LiberarPedido";
-		}
-		
+		try {
+
+			String numeroDeposito    = dynVO.asString("NRODESPOSITO");
+			boolean temDeposito      = (numeroDeposito != null && numeroDeposito != "") ? true : false;
+			BigDecimal valorDeposito = dynVO.asBigDecimal("VALORDEPOSITO");
+
+
+			if (
+					dynVO.asString("STATUSPEDIDO").equals("LI")
+							&& (dynVO.asString("STATUSPROMESSA").equals("CO") || (dynVO.asString("STATUSPROMESSA").equals("PE")
+							&& valorDeposito != null
+							&& valorDeposito.compareTo(BigDecimal.ZERO) > 0))
+							&& temDeposito) {
+				acao = "ConfirmarDeposito";
+			}
+
+			if (dynVO.asString("STATUSPEDIDO").equals("CA") && dynVO.asString("STATUSPROMESSA").equals("CA")) {
+				acao = "CancelarDeposito";
+			}
+
+			if (dynVO.asString("STATUSPEDIDO").equals("PE") && dynVO.asString("STATUSPROMESSA").equals("NE")) {
+				acao = "NegarDeposito";
+			}
+
+			// Na tela de promessa antiga liberava o pedido se o status da promessa estivesse pendente, clicando no botão Liberar Pedido.
+			// Agora, o nome do botão é Liberar Boleto, só que o status que chega é confirmado, como na confirmação de depósito, a diferença
+			// é que no caso do boleto não tem o número do depósito.
+			if (dynVO.asString("STATUSPEDIDO").equals("LI") && dynVO.asString("STATUSPROMESSA").equals("CO") && !temDeposito) {
+				acao = "LiberarPedido";
+			}
+
 //		if(true) {
 //			String msg = "GERAL\\n - Ação "+acao+" \\n - STATUSPEDIDO: "+dynVO.asString("STATUSPEDIDO")+"\\n - STATUSPROMESSA: "+dynVO.asString("STATUSPROMESSA")+"\\n - NRODESPOSITO: "+numeroDeposito+"\\n - temDeposito: "+temDeposito;
 //			throw new Exception(msg+"\n - dynVO: "+dynVO);
 //		}
+		} catch (Exception e) {
+			throw new Exception("Falha ao definir acao\n" + e.getMessage());
+		}
 		
 		return acao;
 	}
@@ -144,7 +152,10 @@ public class SincronizacaoPromessa extends SnkIntegrationsApi implements EventoP
 	}
 	
 	private String getJsonDeposito(PersistenceEvent persistenceEvent, String situacaoComprovante) throws Exception {
-		
+
+		try {
+
+
 		DynamicVO dynVO   = (DynamicVO) persistenceEvent.getVo();
 		BigDecimal nunota = dynVO.asBigDecimal("NUNOTA");
 		String retorno    = "{}";
@@ -176,6 +187,9 @@ public class SincronizacaoPromessa extends SnkIntegrationsApi implements EventoP
 		}
 		
 		return retorno;
+		} catch (Exception e) {
+			throw new Exception("Erro ao gerar Json\n" + e.getMessage());
+		}
 	}
 	
 	@Override
@@ -191,10 +205,16 @@ public class SincronizacaoPromessa extends SnkIntegrationsApi implements EventoP
 
 	@Override
 	public void afterUpdate(PersistenceEvent arg0) throws Exception {
-		DynamicVO dynVO   = (DynamicVO) arg0.getVo();
-		BigDecimal valorDeposito = dynVO.asBigDecimal("VALORDEPOSITO");
-		if(!(dynVO.asString("STATUSPEDIDO").equals("LI") && dynVO.asString("STATUSPROMESSA").equals("PE") && valorDeposito.compareTo(BigDecimal.ZERO) == 0)) {
-			enviarDados(arg0);
+		try {
+			DynamicVO dynVO = (DynamicVO) arg0.getVo();
+			BigDecimal valorDeposito = dynVO.asBigDecimal("VALORDEPOSITO");
+			if (!(dynVO.asString("STATUSPEDIDO").equals("LI") && dynVO.asString("STATUSPROMESSA").equals("PE")
+					&& valorDeposito != null
+					&& valorDeposito.compareTo(BigDecimal.ZERO) == 0)) {
+				enviarDados(arg0);
+			}
+		} catch (Exception e) {
+			throw new Exception("Falha Geral\n" + e.getMessage());
 		}
 	}
 
