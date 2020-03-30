@@ -18,6 +18,7 @@ public class UpdateSql extends SnkIntegrationsApi implements EventoProgramavelJa
 	//private int codUsuarioIntegracaoProducao = 0;
 	
 	public UpdateSql() {
+		this.exigeAutenticacao = true;
 		this.forceUrl("ProductionTest"); // Opções: LocalTest, ProductionTest, AllTest, Production
 	}
 
@@ -57,37 +58,69 @@ public class UpdateSql extends SnkIntegrationsApi implements EventoProgramavelJa
 
 	}
 
+	private String gerarJsonV2(PersistenceEvent persistenceEvent) {
+
+		DynamicVO financialVO 		  = (DynamicVO) persistenceEvent.getVo();
+		ModifingFields modifingFields = persistenceEvent.getModifingFields();
+
+		String json = "{"
+				+ "\"idFinanceiro\": " + financialVO.asBigDecimal("NUFIN").toString() + ","
+				+ "\"idEmpresa\": " + financialVO.asBigDecimal("CODEMP").toString() + ","
+				+ "\"idNota\": " + financialVO.asBigDecimal("NUNOTA").toString() + ","
+				+ "\"numeroNota\": " + financialVO.asBigDecimal("NUMNOTA").toString() + ","
+				+ "\"idUsuarioBaixa\": " + (modifingFields.isModifing("CODUSUBAIXA")
+				? modifingFields.getNewValue("CODUSUBAIXA").toString()
+				: financialVO.asBigDecimal("CODUSUBAIXA").toString()) + ","
+
+				+ "\"idTipoTitulo\": " + (modifingFields.isModifing("CODTIPTIT")
+				? modifingFields.getNewValue("CODTIPTIT").toString()
+				: financialVO.asBigDecimal("CODTIPTIT").toString()) + ","
+
+				+ "\"dataBaixa\": \"" + (modifingFields.isModifing("DHBAIXA")
+				? modifingFields.getNewValue("DHBAIXA").toString()
+				: financialVO.asBigDecimal("DHBAIXA").toString()) + "\","
+
+				+ "\"valorBaixa\": \"" + (modifingFields.isModifing("VLRBAIXA")
+				? modifingFields.getNewValue("VLRBAIXA").toString()
+				: financialVO.asBigDecimal("VLRBAIXA").toString()) + "\","
+
+				+ "\"valorDesdobramento\": \"" + (modifingFields.isModifing("VLRDESDOB")
+				? modifingFields.getNewValue("VLRDESDOB").toString()
+				: financialVO.asBigDecimal("VLRDESDOB").toString()) + "\","
+
+				+ "\"recebimentoCartao\": \"" +  (financialVO.getProperty("RECEBCARTAO") != null ? financialVO.asString("RECEBCARTAO") : "") + "\" ,"
+				+ "\"dataPrazo\": \"" + (modifingFields.isModifing("DTPRAZO")
+				? modifingFields.getNewValue("DTPRAZO").toString()
+				: financialVO.getProperty("DTPRAZO")) + "\" "
+				+ "}";
+
+		return json;
+
+	}
+
 	private void financial(PersistenceEvent persistenceEvent) throws Exception {
 
 		DynamicVO financialVO = (DynamicVO) persistenceEvent.getVo();
-		
-		//int codUsuarioBaixa = Integer.parseInt(financialVO.getProperty("CODUSUBAIXA").toString());
-		
-		//verifica se o usu�rio que est� fazendo a modifica��o � o usu�rio da integra��o
-		//Se for n�o atualiza o financeiro nos bancos de dados
-		//if(codUsuarioBaixa != codUsuarioIntegracaoHomologacao)
-		//{
-			ModifingFields modifingFields = persistenceEvent.getModifingFields();
-			if(modifingFields.isModifing("DHBAIXA")
-					&& modifingFields.getNewValue("DHBAIXA") != null
-					&& financialVO.asInt("RECDESP") == 1
-					&& financialVO.asInt("CODTIPOPER") == 3117)
-			{
-//				String url  = this.urlApi+"/financial/sankhya/"+financialVO.asBigDecimal("NUFIN").toString() + "/" + modifingFields.getNewValue("CODUSUBAIXA").toString();
-				String json = this.gerarJson(persistenceEvent);
-				String url  = this.urlApi+"/financial/sankhya";
 
-				IntegrationApi.send(url, json, "POST");
+		ModifingFields modifingFields = persistenceEvent.getModifingFields();
+		if(modifingFields.isModifing("DHBAIXA")
+				&& modifingFields.getNewValue("DHBAIXA") != null
+				&& financialVO.asInt("RECDESP") == 1
+				&& financialVO.asInt("CODTIPOPER") == 3117)
+		{
+//			PROCESSO V1
+//			String json = this.gerarJson(persistenceEvent);
+//			String url  = this.urlApi+"/financial/sankhya";
+//			IntegrationApi.send(url, json, "POST");
 
-//				int negotiationType = this.getNegotiationType(persistenceEvent, financialVO.asInt("NUNOTA"));
-//
-//				if(negotiationType >= 200 && negotiationType <= 213)
-//				{
-//					String url = this.urlApi+"/financial/sankhya/"+financialVO.asBigDecimal("NUFIN").toString();
-//					IntegrationApi.send(url, "", "POST");
-//				}
-			}
-		//}//Fim IF usuarioIntegracao
+//			PROCESSO V2
+			String json = this.gerarJsonV2(persistenceEvent);
+
+			String url   = this.urlApi + "/v2/caixas/pagamentos";
+			String token = IntegrationApi.getToken(this.urlApi + "/oauth/token?grant_type=client_credentials", "POST", "Basic c2Fua2h5YXc6U0Bua2h5QDJV");
+			IntegrationApi.sendHttp(url, json, "POST", "Bearer " + token);
+
+		}
 	}
 	
 	private int getNegotiationType(PersistenceEvent persistenceEvent, int nunota) throws Exception
