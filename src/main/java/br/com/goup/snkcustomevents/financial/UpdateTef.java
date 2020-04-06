@@ -186,7 +186,7 @@ public class UpdateTef extends SnkIntegrationsApi implements EventoProgramavelJa
 					+ "\"idTipoProduto\": " + idProduto + ","
 					+ "\"idBandeira\": " + idBandeira + ","
 					+ "\"idPagamento\": \"0\", "
-					+ "\"idEstabelecimento\": \"" +  numeroEstabelecimento.trim().substring(3, numeroEstabelecimento.trim().length() - 4) + "\","
+					+ "\"idEstabelecimento\": \"" +  numeroEstabelecimento.trim().substring(2, numeroEstabelecimento.trim().length() - 4) + "\","
 					+ "\"descricaoProduto\": \"" + bandeira + "\","
 					+ "\"codigoAutorizacao\": \"" + tefVO.getProperty("AUTORIZACAO").toString() + "\","
 					+ "\"nsu\": \"" + tefVO.getProperty("NUMNSU").toString() + "\","
