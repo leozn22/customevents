@@ -15,6 +15,7 @@ import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.DecimalFormat;
+import java.util.Iterator;
 import java.util.Locale;
 
 public class UpdateTef extends SnkIntegrationsApi implements EventoProgramavelJava{
@@ -49,59 +50,94 @@ public class UpdateTef extends SnkIntegrationsApi implements EventoProgramavelJa
 
 	private String gerarJsonCartao(PersistenceEvent persistenceEvent, BigDecimal idNota) throws Exception {
 
-		DynamicVO tefVO    = (DynamicVO) persistenceEvent.getVo();
-		String comprovante = tefVO.asString("COMPROVANTE");
-		String bandeira    = tefVO.getProperty("BANDEIRA").toString();
-		String json 	   = "";
+		DynamicVO tefVO    			 = (DynamicVO) persistenceEvent.getVo();
+		String comprovante 			 = tefVO.asString("COMPROVANTE");
+		String bandeira    			 = tefVO.getProperty("BANDEIRA").toString();
+		String json 	   			 = "";
+		String numeroEstabelecimento = "";
+		String tipoNegociacao 		 = "";
 
-		JSONObject jsonObjectCr = new JSONObject(comprovante);
-
+		JSONObject jsonObjectCr        = new JSONObject(comprovante);
 		JSONArray cupomEstabelecimento = jsonObjectCr.getJSONArray("cupomEstabelecimento");
 
-		String auxTipoNegociacao = cupomEstabelecimento.get(15).toString();
-		jsonObjectCr = new JSONObject(auxTipoNegociacao);
-		String tipoNegociacao = jsonObjectCr.getString("linha").trim();
 
-		String auxNumeroCartao = cupomEstabelecimento.get(14).toString();
-		jsonObjectCr = new JSONObject(auxNumeroCartao);
-		String numeroCartao = jsonObjectCr.getString("linha");
-		numeroCartao = numeroCartao.replaceAll(".+\\s+([\\*0-9]+)", "$1").trim();
+		for (int i = 0; i < cupomEstabelecimento.length() - 1; i++) {
+			String jsonPesquisa = cupomEstabelecimento.get(i).toString();
 
-		String auxValorFinal = cupomEstabelecimento.get(17).toString();
-		jsonObjectCr = new JSONObject(auxValorFinal);
-		String valorFinal = jsonObjectCr.getString("linha").trim();
-		valorFinal = valorFinal.replaceAll(".+\\s?([0-9]+)\\s+.*", "$1").trim();
-		valorFinal = valorFinal.substring(valorFinal.indexOf("$") + 1, valorFinal.length()).trim();
-		valorFinal.replace(",", ".");
-		valorFinal.replace(", ", ".");
-		valorFinal.replace(" ,", ".");
-		valorFinal.replace(" , ", ".");
+			JSONObject jsonLinha = new JSONObject(jsonPesquisa);
+			String valor         =	jsonLinha.getString("linha").trim();
 
-		this.valorTotalTransacao = new BigDecimal(valorFinal.replaceAll("\\.", "").replace(",","."));
+//			ESTABELECIMENTO
+			if (valor.contains("POS") || valor.contains("823982346832235")) {
 
-		String auxNsu = cupomEstabelecimento.get(11).toString();
-		jsonObjectCr = new JSONObject(auxNsu);
-		String nsu = jsonObjectCr.getString("linha");
-		nsu = nsu.replaceAll(".+DOC:\\s?([0-9]+)\\s+.*", "$1").trim();
+				numeroEstabelecimento = valor.replaceAll("\\s*([0-9]+).*", "$1").trim();
+			}
 
-		JSONObject jsonObjectCe = new JSONObject(comprovante);
+//			TIPO NEGOCIAÇÃO
+			if (valor.contains("VENDA")) {
+				tipoNegociacao = valor.trim();
+			}
+
+//			VALOR TOTAL DA VENDA
+			if (valor.contains("VALOR")) {
+				valor = valor.replaceAll("[^0-9,.]+", "").trim();
+
+				valor.replace(",", ".");
+				valor.replace(", ", ".");
+				valor.replace(" ,", ".");
+				valor.replace(" , ", ".");
+
+				this.valorTotalTransacao = new BigDecimal(valor.replaceAll("\\.", "").replace(",","."));
+			}
+		}
+
+//		String auxTipoNegociacao = cupomEstabelecimento.get(12).toString(); //base treina 15
+
+//		jsonObjectCr = new JSONObject(auxTipoNegociacao);
+//		String tipoNegociacao = jsonObjectCr.getString("linha").trim();
+
+//		REMOVIDO - NA PRODUÇÃO NÃO TEM
+//		String auxNumeroCartao = cupomEstabelecimento.get(14).toString();
+//		jsonObjectCr = new JSONObject(auxNumeroCartao);
+//		String numeroCartao = jsonObjectCr.getString("linha");
+//		numeroCartao = numeroCartao.replaceAll(".+\\s+([\\*0-9]+)", "$1").trim();
+
+//		String auxValorFinal = cupomEstabelecimento.get(14).toString();//base treina 17
+//		jsonObjectCr = new JSONObject(auxValorFinal);
+//		String valorFinal = jsonObjectCr.getString("linha").trim();
+//		valorFinal = valorFinal.replaceAll(".+\\s?([0-9]+)\\s+.*", "$1").trim();
+//		valorFinal = valorFinal.substring(valorFinal.indexOf(":") + 1, valorFinal.length()).trim(); //BASE TREINA TEM O $
+//		valorFinal.replace(",", ".");
+//		valorFinal.replace(", ", ".");
+//		valorFinal.replace(" ,", ".");
+//		valorFinal.replace(" , ", ".");
+
+//		this.valorTotalTransacao = new BigDecimal(valorFinal.replaceAll("\\.", "").replace(",","."));
+
+//		String auxNsu = cupomEstabelecimento.get(10).toString(); //base treina 11
+//		jsonObjectCr = new JSONObject(auxNsu);
+//		String nsu = jsonObjectCr.getString("linha");
+//		nsu = nsu.replaceAll(".+DOC:\\s?([0-9]+)\\s+.*", "$1").trim();
+
+//		JSONObject jsonObjectCe = new JSONObject(comprovante);
 //		JSONArray cupomEstabelecimento = jsonObjectCe.getJSONArray("cupomEstabelecimento");
 
-		String auxNumeroEstabelecimento = cupomEstabelecimento.get(8).toString();
-		jsonObjectCe = new JSONObject(auxNumeroEstabelecimento);
-		String numeroEstabelecimento = jsonObjectCe.getString("linha");
-		numeroEstabelecimento = numeroEstabelecimento.replaceAll("\\s*([0-9]+).*", "$1").trim();
+//		String auxNumeroEstabelecimento = cupomEstabelecimento.get(9).toString(); //base treina 8
+//		jsonObjectCe = new JSONObject(auxNumeroEstabelecimento);
+//		String numeroEstabelecimento = jsonObjectCe.getString("linha");
+//		numeroEstabelecimento = numeroEstabelecimento.replaceAll("\\s*([0-9]+).*", "$1").trim();
+
 
 		// Usado em ambiente de teste
-		if (numeroEstabelecimento.equals("823982346832235")) {
+		if (numeroEstabelecimento.equals("823982346832235") || numeroEstabelecimento == null || numeroEstabelecimento.equals("")) {
 			numeroEstabelecimento = "1023441710";
 		}
 
 		String tipoVenda = "D";
-		this.isCredito   = !tipoNegociacao.equalsIgnoreCase("VENDA DEBITO A VISTA");
-		if (tipoNegociacao.equalsIgnoreCase("VENDA CREDITO PARC.LOJA")) {
+		this.isCredito   = !tipoNegociacao.contains("DEBITO");
+		if (tipoNegociacao.contains("PARC.LOJA")) {
 			tipoVenda = "P";
-		} else if (tipoNegociacao.equalsIgnoreCase("VENDA CREDITO A VISTA")) {
+		} else if (tipoNegociacao.contains("CREDITO")) {
 			tipoVenda = "C";
 		}
 
@@ -114,6 +150,7 @@ public class UpdateTef extends SnkIntegrationsApi implements EventoProgramavelJa
 		else if (bandeira.equals("DEMOCARD") && tipoNegociacao.equalsIgnoreCase("VENDA DEBITO A VISTA")) {
 			bandeira = "MAESTRO";
 		} // Usado em ambiente de teste
+
 
 		JdbcWrapper jdbc = persistenceEvent.getJdbcWrapper();
 		NativeSql sql = new NativeSql(jdbc);
@@ -130,6 +167,18 @@ public class UpdateTef extends SnkIntegrationsApi implements EventoProgramavelJa
 		}
 		r1.getStatement().close();
 
+		if (idProduto == null) {
+			String[] valores = bandeira.split(" ");
+			String valor = valores[0].trim();
+
+			r1 = sql.executeQuery(" SELECT  NUPRO, NUBAN, DESCRPROD FROM AD_TCCPRO WHERE DESCRPROD LIKE '%" + valor
+					+ "%' AND TIPOVENDA = '" + tipoVenda+  "'");
+			if (r1.next()) {
+				idProduto = r1.getBigDecimal("NUPRO");
+				idBandeira = r1.getBigDecimal("NUBAN");
+			}
+			r1.getStatement().close();
+		}
 
 		json = "\"cartaoSankhya\": {"
 //					+ "\"idCartao\": " + tefVO.asBigDecimal("NUFIN").toString() + ","
@@ -137,17 +186,16 @@ public class UpdateTef extends SnkIntegrationsApi implements EventoProgramavelJa
 					+ "\"idTipoProduto\": " + idProduto + ","
 					+ "\"idBandeira\": " + idBandeira + ","
 					+ "\"idPagamento\": \"0\", "
-					+ "\"idEstabelecimento\": \"" + numeroEstabelecimento + "\","
+					+ "\"idEstabelecimento\": \"" +  numeroEstabelecimento.trim().substring(3, numeroEstabelecimento.trim().length() - 4) + "\","
 					+ "\"descricaoProduto\": \"" + bandeira + "\","
 					+ "\"codigoAutorizacao\": \"" + tefVO.getProperty("AUTORIZACAO").toString() + "\","
-					+ "\"nsu\": \"" + nsu + "\","
+					+ "\"nsu\": \"" + tefVO.getProperty("NUMNSU").toString() + "\","
 					+ "\"tid\": \"0\","
 					+ "\"taxaAdministrativa\": " + tefVO.getProperty("VLRTAXA").toString() + ","
-					+ "\"numeroCartao\": \"" + numeroCartao + "\","
+					+ "\"numeroCartao\": \"\","
 					+ "\"dataPagamento\": \"" + tefVO.getProperty("DTTRANSACAO") + "\","
 					+ "\"valorTransacao\": " + tefVO.getProperty("VLRTRANSACAO").toString()
 				+ "}";
-
 
 		return json;
 	}
@@ -267,6 +315,10 @@ public class UpdateTef extends SnkIntegrationsApi implements EventoProgramavelJa
 									+ jsonTef + ", "
 									+ jsonCartao
 									+ "} ";
+//
+//				if (true) {
+//					throw new Exception(json);
+//				}
 
 //				PROCESSO V2
 				String url = this.urlApi + "/v2/caixas/cartoes";
@@ -284,6 +336,13 @@ public class UpdateTef extends SnkIntegrationsApi implements EventoProgramavelJa
 		
 		String url = this.urlApi+"/financial/sankhya/tef/sincronize";
 		IntegrationApi.send(url, "", "POST");
+	}
+
+	private void cancelarCartao(PersistenceEvent persistenceEvent) throws Exception {
+		DynamicVO tefVO = (DynamicVO) persistenceEvent.getVo();
+		String url   = this.urlApi + "/v2/caixas/cartoes/" + tefVO.asBigDecimal("IDENTIFICACAOTEF").toString();
+		String token = IntegrationApi.getToken(this.urlApi + "/oauth/token?grant_type=client_credentials", "POST", "Basic c2Fua2h5YXc6U0Bua2h5QDJV");
+		IntegrationApi.sendHttp(url, "{\"idUsuario\":" + tefVO.asBigDecimal("CODUSU").toString() + "}", "DELETE", "Bearer " + token);
 	}
 	
 	@Override
@@ -313,7 +372,7 @@ public class UpdateTef extends SnkIntegrationsApi implements EventoProgramavelJa
 	@Override
 	public void beforeDelete(PersistenceEvent arg0) throws Exception {
 		// TODO Auto-generated method stub
-		
+		this.cancelarCartao(arg0);
 	}
 
 	@Override
