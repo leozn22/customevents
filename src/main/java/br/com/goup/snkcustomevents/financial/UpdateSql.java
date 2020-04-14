@@ -106,7 +106,9 @@ public class UpdateSql extends SnkIntegrationsApi implements EventoProgramavelJa
 		ModifingFields modifingFields = persistenceEvent.getModifingFields();
 		if(modifingFields.isModifing("DHBAIXA")
 				&& financialVO.asInt("RECDESP") == 1
-				&& financialVO.asInt("CODTIPTIT") == 2
+				&& (financialVO.asInt("CODTIPTIT") == 2
+					|| financialVO.asInt("CODTIPTIT") == 3
+					|| financialVO.asInt("CODTIPTIT") == 26)
 				&& (financialVO.asInt("CODTIPOPER") == 3117
 					|| financialVO.asInt("CODTIPOPER") == 4401))
 		{
