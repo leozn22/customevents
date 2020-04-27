@@ -8,8 +8,15 @@ import br.com.sankhya.jape.event.PersistenceEvent;
 import br.com.sankhya.jape.event.TransactionContext;
 import br.com.sankhya.jape.sql.NativeSql;
 import br.com.sankhya.jape.vo.DynamicVO;
+import br.com.sankhya.jape.wrapper.JapeFactory;
+import br.com.sankhya.jape.wrapper.JapeWrapper;
+import br.com.sankhya.jape.wrapper.fluid.FluidCreateVO;
+import br.com.sankhya.modelcore.auth.AuthenticationInfo;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
+
+import com.sankhya.util.TimeUtils;
 
 import java.math.BigDecimal;
 import java.sql.ResultSet;
@@ -22,7 +29,7 @@ public class UpdateTef extends SnkIntegrationsApi implements EventoProgramavelJa
 	
 	public UpdateTef() {
 		this.exigeAutenticacao = true;
-		this.forceUrl("AllTest"); // Opções: LocalTest, ProductionTest, AllTest, Production
+		this.forceUrl("ProductionTest"); // Opções: LocalTest, ProductionTest, AllTest, Production
 	}
 
 	private boolean isCredito = true;
@@ -157,13 +164,15 @@ public class UpdateTef extends SnkIntegrationsApi implements EventoProgramavelJa
 		sql.appendSql(" SELECT  NUPRO, NUBAN, DESCRPROD FROM AD_TCCPRO WHERE DESCRPROD LIKE '%" + bandeira
 				+ "%' AND TIPOVENDA = '" + tipoVenda+  "'");
 
-		BigDecimal idProduto = null;
+		BigDecimal idProduto  = null;
 		BigDecimal idBandeira = null;
+		String descrProd      = null;
 
 		ResultSet r1 = sql.executeQuery();
 		if (r1.next()) {
-			idProduto = r1.getBigDecimal("NUPRO");
+			idProduto  = r1.getBigDecimal("NUPRO");
 			idBandeira = r1.getBigDecimal("NUBAN");
+			descrProd  = r1.getString("DESCRPROD");
 		}
 		r1.getStatement().close();
 
@@ -176,10 +185,34 @@ public class UpdateTef extends SnkIntegrationsApi implements EventoProgramavelJa
 			if (r1.next()) {
 				idProduto = r1.getBigDecimal("NUPRO");
 				idBandeira = r1.getBigDecimal("NUBAN");
+				descrProd  = r1.getString("DESCRPROD");
 			}
 			r1.getStatement().close();
 		}
-
+		
+		r1 = sql.executeQuery("SELECT NUCTRL FROM AD_TCCCAB WHERE NUNOTA = " + idNota);
+				
+		if (!r1.next()) {
+			JapeWrapper logDAO   = JapeFactory.dao("AD_TCCCAB");
+			FluidCreateVO creLog = logDAO.create();
+			
+			creLog.set("CODTIPPROD", idProduto);
+			creLog.set("DESCRTIPPROD", descrProd);
+			creLog.set("IDPAG", "0");
+			creLog.set("TID", "0");
+			creLog.set("TAXAADM", tefVO.getProperty("VLRTAXA"));
+			creLog.set("NUBAN", idBandeira);
+			//creLog.set("NUCARTAO", "");
+			creLog.set("NUESTABELECIMENTO", numeroEstabelecimento);
+			creLog.set("DTPAGCARTAO", tefVO.getProperty("DTTRANSACAO"));
+			creLog.set("CODAUT", tefVO.getProperty("AUTORIZACAO").toString());
+			creLog.set("NUNOTA", idNota);
+			creLog.set("VLRTRANSACAO", new BigDecimal(tefVO.getProperty("VLRTRANSACAO").toString()));
+			creLog.set("NSU", tefVO.getProperty("NUMNSU").toString());
+			creLog.save();
+		}
+		r1.getStatement().close();
+		
 		json = "\"cartaoSankhya\": {"
 //					+ "\"idCartao\": " + tefVO.asBigDecimal("NUFIN").toString() + ","
 					+ "\"idNota\": " + idNota + ","
@@ -315,7 +348,7 @@ public class UpdateTef extends SnkIntegrationsApi implements EventoProgramavelJa
 									+ jsonTef + ", "
 									+ jsonCartao
 									+ "} ";
-//
+
 //				if (true) {
 //					throw new Exception(json);
 //				}
