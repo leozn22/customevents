@@ -29,7 +29,7 @@ public class UpdateTef extends SnkIntegrationsApi implements EventoProgramavelJa
 	
 	public UpdateTef() {
 		this.exigeAutenticacao = true;
-		this.forceUrl("ProductionTest"); // Opções: LocalTest, ProductionTest, AllTest, Production
+		this.forceUrl("AllTest"); // Opções: LocalTest, ProductionTest, AllTest, Production
 	}
 
 	private boolean isCredito = true;
