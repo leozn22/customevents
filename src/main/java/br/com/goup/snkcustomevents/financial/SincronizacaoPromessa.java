@@ -65,16 +65,20 @@ public class SincronizacaoPromessa extends SnkIntegrationsApi implements EventoP
 		try {
 
 			String numeroDeposito    = dynVO.asString("NRODESPOSITO");
-			boolean temDeposito      = (numeroDeposito != null && numeroDeposito != "") ? true : false;
+			boolean temDeposito      = (numeroDeposito != null && !numeroDeposito.equals("") && !numeroDeposito.equals("null")) ? true : false;
 			BigDecimal valorDeposito = dynVO.asBigDecimal("VALORDEPOSITO");
-
 
 			if (
 					dynVO.asString("STATUSPEDIDO").equals("LI")
-							&& (dynVO.asString("STATUSPROMESSA").equals("CO") || (dynVO.asString("STATUSPROMESSA").equals("PE")
-							&& valorDeposito != null
-							&& valorDeposito.compareTo(BigDecimal.ZERO) > 0))
-							&& temDeposito) {
+					&& (
+							dynVO.asString("STATUSPROMESSA").equals("CO") 
+							|| (
+								dynVO.asString("STATUSPROMESSA").equals("PE")
+								&& valorDeposito != null
+								&& valorDeposito.compareTo(BigDecimal.ZERO) > 0
+							)
+						)
+					&& temDeposito) {
 				acao = "ConfirmarDeposito";
 			}
 
