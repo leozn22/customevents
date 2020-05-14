@@ -28,7 +28,8 @@ import java.util.Locale;
 public class UpdateTef extends SnkIntegrationsApi implements EventoProgramavelJava{
 	
 	public UpdateTef() {
-		this.exigeAutenticacao = true;
+		this.exigeAutenticacao = true; 
+		// QUANDO ALTERAR O PARÂMETRO ABAIXO, DEVE ALTERAR DA MESMA FORMA NOS ARQUIVOS: UpdateSql.java e ItemAcao.java
 		this.forceUrl("AllTest"); // Opções: LocalTest, ProductionTest, AllTest, Production
 	}
 
@@ -203,7 +204,7 @@ public class UpdateTef extends SnkIntegrationsApi implements EventoProgramavelJa
 			creLog.set("TAXAADM", tefVO.getProperty("VLRTAXA"));
 			creLog.set("NUBAN", idBandeira);
 			//creLog.set("NUCARTAO", "");
-			creLog.set("NUESTABELECIMENTO", numeroEstabelecimento);
+			creLog.set("NUESTABELECIMENTO", numeroEstabelecimento.trim().substring(2, numeroEstabelecimento.trim().length() - 4));
 			creLog.set("DTPAGCARTAO", tefVO.getProperty("DTTRANSACAO"));
 			creLog.set("CODAUT", tefVO.getProperty("AUTORIZACAO").toString());
 			creLog.set("NUNOTA", idNota);
