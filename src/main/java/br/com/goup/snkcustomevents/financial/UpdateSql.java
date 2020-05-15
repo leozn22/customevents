@@ -108,9 +108,12 @@ public class UpdateSql extends SnkIntegrationsApi implements EventoProgramavelJa
 				&& financialVO.asInt("RECDESP") == 1
 				&& (financialVO.asInt("CODTIPTIT") == 2
 					|| financialVO.asInt("CODTIPTIT") == 3
+					|| financialVO.asInt("CODTIPTIT") == 4
+					|| financialVO.asInt("CODTIPTIT") == 15
 					|| financialVO.asInt("CODTIPTIT") == 26)
 				&& (financialVO.asInt("CODTIPOPER") == 3117
-					|| financialVO.asInt("CODTIPOPER") == 4401))
+					|| financialVO.asInt("CODTIPOPER") == 4401
+					|| financialVO.asInt("CODTIPOPER") == 3107))
 		{
 
 			if (modifingFields.getNewValue("DHBAIXA") != null) {
