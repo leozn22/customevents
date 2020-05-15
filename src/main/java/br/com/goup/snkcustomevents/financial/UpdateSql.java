@@ -66,7 +66,7 @@ public class UpdateSql extends SnkIntegrationsApi implements EventoProgramavelJa
 				+ "\"idNota\": " + financialVO.asBigDecimal("NUNOTA") + ","
 				+ "\"numeroNota\": " + financialVO.asBigDecimal("NUMNOTA").toString() + ","
 				+ "\"idParceiro\": " + financialVO.asBigDecimal("CODPARC").toString() + ","
-				+ "\"idTipoOperacao\": " + financialVO.asBigDecimal("CODTIPOPER").toString() + ","
+				+ "\"idTipoOperacao\": " + (financialVO.asBigDecimal("CODTIPOPER").intValue() == 4104 ? "4401" : financialVO.asBigDecimal("CODTIPOPER").toString()) + ","
 				+ "\"idUsuarioBaixa\": " + (modifingFields.isModifing("CODUSUBAIXA")
 				? modifingFields.getNewValue("CODUSUBAIXA").toString()
 				: financialVO.asBigDecimal("CODUSUBAIXA").toString()) + ","
@@ -113,6 +113,7 @@ public class UpdateSql extends SnkIntegrationsApi implements EventoProgramavelJa
 					|| financialVO.asInt("CODTIPTIT") == 26)
 				&& (financialVO.asInt("CODTIPOPER") == 3117
 					|| financialVO.asInt("CODTIPOPER") == 4401
+					|| financialVO.asInt("CODTIPOPER") == 4104
 					|| financialVO.asInt("CODTIPOPER") == 3107))
 		{
 
