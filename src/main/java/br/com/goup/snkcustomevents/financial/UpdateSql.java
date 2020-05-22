@@ -16,7 +16,7 @@ public class UpdateSql extends SnkIntegrationsApi implements EventoProgramavelJa
 	
 	public UpdateSql() {
 		this.exigeAutenticacao = true;
-		this.forceUrl("AllTest"); // Opções: LocalTest, ProductionTest, AllTest, Production
+		this.forceUrl("LocalTest"); // Opções: LocalTest, ProductionTest, AllTest, Production
 	}
 
 	private String gerarJson(PersistenceEvent persistenceEvent) {
@@ -53,6 +53,26 @@ public class UpdateSql extends SnkIntegrationsApi implements EventoProgramavelJa
 
 		return json;
 
+	}
+
+	private String gerarJsonDespesa(PersistenceEvent persistenceEvent) {
+
+		DynamicVO financialVO 		  = (DynamicVO) persistenceEvent.getVo();
+
+		String json = "{"
+				+ "\"idFinanceiro\": " + financialVO.asBigDecimal("NUFIN").toString() + ","
+				+ "\"idEmpresa\": " + financialVO.asBigDecimal("CODEMP").toString() + ","
+				+ "\"idNota\": " + financialVO.asBigDecimal("NUNOTA") + ","
+				+ "\"numeroNota\": " + financialVO.asBigDecimal("NUMNOTA").toString() + ","
+				+ "\"idParceiro\": " + financialVO.asBigDecimal("CODPARC").toString() + ","
+				+ "\"idTipoOperacao\": " + (financialVO.asBigDecimal("CODTIPOPER").intValue() == 4107 ? "4401" : financialVO.asBigDecimal("CODTIPOPER").toString()) + ","
+				+ "\"idUsuarioBaixa\": " +  financialVO.asBigDecimal("CODUSU") + ","
+				+ "\"idTipoTitulo\": " + "15" + ","
+				+ "\"valorDesdobramento\": \"" + financialVO.asBigDecimal("VLRDESDOB").toString() + "\","
+				+ "\"dataPrazo\": \"" + financialVO.getProperty("DTPRAZO") + "\" "
+				+ "}";
+
+		return json;
 	}
 
 	private String gerarJsonV2(PersistenceEvent persistenceEvent) throws Exception {
@@ -114,9 +134,12 @@ public class UpdateSql extends SnkIntegrationsApi implements EventoProgramavelJa
 				&& (financialVO.asInt("CODTIPOPER") == 3117
 					|| financialVO.asInt("CODTIPOPER") == 4401
 					|| financialVO.asInt("CODTIPOPER") == 4104
-					|| financialVO.asInt("CODTIPOPER") == 3107))
+					|| financialVO.asInt("CODTIPOPER") == 3107
+				    || (financialVO.asInt("CODTIPOPER") == 3106
+							&& (modifingFields.isModifing("CODCTABCOINT")
+									? Integer.parseInt(modifingFields.getNewValue("CODCTABCOINT").toString())
+									: financialVO.asInt("CODCTABCOINT")) == 21)))
 		{
-
 			if (modifingFields.getNewValue("DHBAIXA") != null) {
 //			PROCESSO V1
 //			String json = this.gerarJson(persistenceEvent);
@@ -137,6 +160,18 @@ public class UpdateSql extends SnkIntegrationsApi implements EventoProgramavelJa
 			}
 		}
 
+		if (financialVO.asInt("RECDESP") == -1
+			&& financialVO.asInt("CODTIPOPER") == 4107
+			&& persistenceEvent.getModifingFields().isModifing("CODPARC")
+			&& persistenceEvent.getModifingFields().getOldValue("CODPARC").toString().equals("638")
+			&& !persistenceEvent.getModifingFields().getNewValue("CODPARC").toString().equals("638")) {
+
+			String json = this.gerarJsonDespesa(persistenceEvent);
+
+			String url = this.urlApi + "/v2/caixas/pagamentos";
+			String token = IntegrationApi.getToken(this.urlApi + "/oauth/token?grant_type=client_credentials", "POST", "Basic c2Fua2h5YXc6U0Bua2h5QDJV");
+			IntegrationApi.sendHttp(url, json, "POST", "Bearer " + token);
+		}
 	}
 	
 	private int getNegotiationType(PersistenceEvent persistenceEvent, int nunota) throws Exception
