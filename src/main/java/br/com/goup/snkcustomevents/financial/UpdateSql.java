@@ -163,8 +163,16 @@ public class UpdateSql extends SnkIntegrationsApi implements EventoProgramavelJa
 		if (financialVO.asInt("RECDESP") == -1
 			&& financialVO.asInt("CODTIPOPER") == 4107
 			&& persistenceEvent.getModifingFields().isModifing("CODPARC")
-			&& persistenceEvent.getModifingFields().getOldValue("CODPARC").toString().equals("638")
-			&& !persistenceEvent.getModifingFields().getNewValue("CODPARC").toString().equals("638")) {
+			&& ((
+					persistenceEvent.getModifingFields().getOldValue("CODPARC").toString().equals("638")
+					&& !persistenceEvent.getModifingFields().getNewValue("CODPARC").toString().equals("638")
+				)
+				||
+				(
+					persistenceEvent.getModifingFields().getOldValue("CODPARC").toString().equals("656")
+					&& !persistenceEvent.getModifingFields().getNewValue("CODPARC").toString().equals("656"))
+				)
+			) {
 
 			String json = this.gerarJsonDespesa(persistenceEvent);
 
