@@ -16,7 +16,8 @@ public class UpdateSql extends SnkIntegrationsApi implements EventoProgramavelJa
 	
 	public UpdateSql() {
 		this.exigeAutenticacao = true;
-		this.forceUrl("LocalTest"); // Opções: LocalTest, ProductionTest, AllTest, Production
+		// QUANDO ALTERAR O PARÂMETRO ABAIXO, DEVE ALTERAR DA MESMA FORMA NOS ARQUIVOS: ItemAcao.java e UpdateTef.java
+		this.forceUrl("AllTest"); // Opções: LocalTest, ProductionTest, AllTest, Production
 	}
 
 	private String gerarJson(PersistenceEvent persistenceEvent) {
@@ -148,11 +149,19 @@ public class UpdateSql extends SnkIntegrationsApi implements EventoProgramavelJa
 
 //			PROCESSO V2
 				String json = this.gerarJsonV2(persistenceEvent);
+				
+//				if (true) {
+//					throw new Exception(json);
+//				}
 
 				String url = this.urlApi + "/v2/caixas/pagamentos";
 				String token = IntegrationApi.getToken(this.urlApi + "/oauth/token?grant_type=client_credentials", "POST", "Basic c2Fua2h5YXc6U0Bua2h5QDJV");
 				IntegrationApi.sendHttp(url, json, "POST", "Bearer " + token);
 			} else {
+				
+//				if (true) {
+//					throw new Exception(financialVO.asBigDecimal("NUFIN").toString());
+//				}
 
 				String url   = this.urlApi + "/v2/caixas/pagamentos/" + financialVO.asBigDecimal("NUFIN").toString();
 				String token = IntegrationApi.getToken(this.urlApi + "/oauth/token?grant_type=client_credentials", "POST", "Basic c2Fua2h5YXc6U0Bua2h5QDJV");
@@ -175,6 +184,10 @@ public class UpdateSql extends SnkIntegrationsApi implements EventoProgramavelJa
 		) {
 
 			String json = this.gerarJsonDespesa(persistenceEvent);
+			
+//			if (true) {
+//				throw new Exception(json);
+//			}
 
 			String url = this.urlApi + "/v2/caixas/pagamentos";
 			String token = IntegrationApi.getToken(this.urlApi + "/oauth/token?grant_type=client_credentials", "POST", "Basic c2Fua2h5YXc6U0Bua2h5QDJV");

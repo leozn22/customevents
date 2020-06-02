@@ -10,6 +10,7 @@ public class ItemAcao extends SnkIntegrationsApi implements AcaoRotinaJava {
 
     public ItemAcao() {
         this.exigeAutenticacao = true;
+		// QUANDO ALTERAR O PARÂMETRO ABAIXO, DEVE ALTERAR DA MESMA FORMA NOS ARQUIVOS: UpdateSql.java e UpdateTef.java
         this.forceUrl("AllTest"); // Opções: LocalTest, ProductionTest, AllTest, Production
     }
 
