@@ -1,6 +1,8 @@
 package br.com.goup.snkcustomevents.financial;
 
 import java.sql.ResultSet;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 
 import br.com.sankhya.extensions.eventoprogramavel.EventoProgramavelJava;
 import br.com.sankhya.jape.dao.JdbcWrapper;
@@ -20,10 +22,26 @@ public class UpdateSql extends SnkIntegrationsApi implements EventoProgramavelJa
 		this.forceUrl("AllTest"); // Opções: LocalTest, ProductionTest, AllTest, Production
 	}
 
-	private String gerarJson(PersistenceEvent persistenceEvent) {
+	private String gerarJson(PersistenceEvent persistenceEvent) throws Exception {
 
 		DynamicVO financialVO 		  = (DynamicVO) persistenceEvent.getVo();
 		ModifingFields modifingFields = persistenceEvent.getModifingFields();
+
+		String dataBaixa = (modifingFields.isModifing("DHBAIXA")
+				? modifingFields.getNewValue("DHBAIXA").toString()
+				: financialVO.asBigDecimal("DHBAIXA").toString());
+		Calendar dtBaixa = null;
+		if (dataBaixa != null) {
+			dtBaixa = Calendar.getInstance();
+			try {
+				SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
+				dtBaixa.setTime(format.parse(dataBaixa));
+				format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+				dataBaixa = format.format(dtBaixa.getTime());
+			} catch (Exception e) {
+				throw new Exception("Falha na Data de Baixa");
+			}
+		}
 
 		String json = "{"
 				+ "\"financialId\": " + financialVO.asBigDecimal("NUFIN").toString() + ","
@@ -38,9 +56,7 @@ public class UpdateSql extends SnkIntegrationsApi implements EventoProgramavelJa
 										? modifingFields.getNewValue("CODTIPTIT").toString()
 										: financialVO.asBigDecimal("CODTIPTIT").toString()) + ","
 
-				+ "\"paymentDate\": \"" + (modifingFields.isModifing("DHBAIXA")
-										? modifingFields.getNewValue("DHBAIXA").toString()
-										: financialVO.asBigDecimal("DHBAIXA").toString()) + "\","
+				+ "\"paymentDate\": \"" + dataBaixa + "\","
 
 				+ "\"paidValue\": \"" + (modifingFields.isModifing("VLRBAIXA")
 										? modifingFields.getNewValue("VLRBAIXA").toString()
@@ -81,6 +97,26 @@ public class UpdateSql extends SnkIntegrationsApi implements EventoProgramavelJa
 		DynamicVO financialVO 		  = (DynamicVO) persistenceEvent.getVo();
 		ModifingFields modifingFields = persistenceEvent.getModifingFields();
 
+		String dataBaixa = (modifingFields.isModifing("DHBAIXA")
+				? modifingFields.getNewValue("DHBAIXA").toString()
+				: financialVO.asBigDecimal("DHBAIXA").toString());
+		Calendar dtBaixa = null;
+		if (dataBaixa != null) {
+			dtBaixa = Calendar.getInstance();
+			try {
+				SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
+				dtBaixa.setTime(format.parse(dataBaixa));
+				format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+				dataBaixa = format.format(dtBaixa.getTime());
+			} catch (Exception e) {
+				throw new Exception("Falha na Data de Baixa");
+			}
+		}
+
+		String dataPrazo = (modifingFields.isModifing("DTPRAZO")
+				? modifingFields.getNewValue("DTPRAZO").toString()
+				: (financialVO.getProperty("DTPRAZO") != null ? financialVO.getProperty("DTPRAZO").toString() : financialVO.getProperty("DHBAIXA").toString()));
+
 		String json = "{"
 				+ "\"idFinanceiro\": " + financialVO.asBigDecimal("NUFIN").toString() + ","
 				+ "\"idEmpresa\": " + financialVO.asBigDecimal("CODEMP").toString() + ","
@@ -98,9 +134,7 @@ public class UpdateSql extends SnkIntegrationsApi implements EventoProgramavelJa
 				? "26"
 				: financialVO.asBigDecimal("CODTIPTIT").toString())) + ","
 
-				+ "\"dataBaixa\": \"" + (modifingFields.isModifing("DHBAIXA")
-				? modifingFields.getNewValue("DHBAIXA").toString()
-				: financialVO.asBigDecimal("DHBAIXA").toString()) + "\","
+				+ "\"dataBaixa\": \"" + dataBaixa + "\","
 
 				+ "\"valorBaixa\": \"" + (modifingFields.isModifing("VLRBAIXA")
 				? modifingFields.getNewValue("VLRBAIXA").toString()
@@ -111,9 +145,7 @@ public class UpdateSql extends SnkIntegrationsApi implements EventoProgramavelJa
 				: financialVO.asBigDecimal("VLRDESDOB").toString()) + "\","
 
 				+ "\"recebimentoCartao\": \"" +  (financialVO.getProperty("RECEBCARTAO") != null ? financialVO.asString("RECEBCARTAO") : "") + "\" ,"
-				+ "\"dataPrazo\": \"" + (modifingFields.isModifing("DTPRAZO")
-				? modifingFields.getNewValue("DTPRAZO").toString()
-				: financialVO.getProperty("DTPRAZO")) + "\" "
+				+ "\"dataPrazo\": \"" + dataPrazo + "\" "
 				+ "}";
 
 		return json;
