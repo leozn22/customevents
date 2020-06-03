@@ -11,19 +11,13 @@ import br.com.sankhya.jape.vo.DynamicVO;
 import br.com.sankhya.jape.wrapper.JapeFactory;
 import br.com.sankhya.jape.wrapper.JapeWrapper;
 import br.com.sankhya.jape.wrapper.fluid.FluidCreateVO;
-import br.com.sankhya.modelcore.auth.AuthenticationInfo;
-
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import com.sankhya.util.TimeUtils;
-
 import java.math.BigDecimal;
 import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.text.DecimalFormat;
-import java.util.Iterator;
-import java.util.Locale;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 
 public class UpdateTef extends SnkIntegrationsApi implements EventoProgramavelJava{
 	
@@ -213,7 +207,22 @@ public class UpdateTef extends SnkIntegrationsApi implements EventoProgramavelJa
 			creLog.save();
 		}
 		r1.getStatement().close();
-		
+
+
+		String dataTransacao = tefVO.getProperty("DTTRANSACAO").toString();
+		Calendar dtTransacao = null;
+		if (dataTransacao != null) {
+			dtTransacao = Calendar.getInstance();
+			try {
+				SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
+				dtTransacao.setTime(format.parse(dataTransacao));
+				format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+				dataTransacao = format.format(dtTransacao.getTime());
+			} catch (Exception e) {
+				throw new Exception("Falha na Data de Baixa");
+			}
+		}
+
 		json = "\"cartaoSankhya\": {"
 //					+ "\"idCartao\": " + tefVO.asBigDecimal("NUFIN").toString() + ","
 					+ "\"idNota\": " + idNota + ","
@@ -227,16 +236,31 @@ public class UpdateTef extends SnkIntegrationsApi implements EventoProgramavelJa
 					+ "\"tid\": \"0\","
 					+ "\"taxaAdministrativa\": " + tefVO.getProperty("VLRTAXA").toString() + ","
 					+ "\"numeroCartao\": \"\","
-					+ "\"dataPagamento\": \"" + tefVO.getProperty("DTTRANSACAO") + "\","
+					+ "\"dataPagamento\": \"" + dataTransacao + "\","
 					+ "\"valorTransacao\": " + tefVO.getProperty("VLRTRANSACAO").toString()
 				+ "}";
 
 		return json;
 	}
 
-	private String gerarJsonTef(PersistenceEvent persistenceEvent) {
+	private String gerarJsonTef(PersistenceEvent persistenceEvent) throws Exception {
 
 		DynamicVO tefVO = (DynamicVO) persistenceEvent.getVo();
+
+		String dataTransacao = tefVO.getProperty("DTTRANSACAO").toString();
+		Calendar dtTransacao = null;
+		if (dataTransacao != null) {
+			dtTransacao = Calendar.getInstance();
+			try {
+				SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
+				dtTransacao.setTime(format.parse(dataTransacao));
+				format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+				dataTransacao = format.format(dtTransacao.getTime());
+			} catch (Exception e) {
+				throw new Exception("Falha na Data da transação");
+			}
+		}
+
 		String json = "\"tefSankhya\": {"
 						+ "\"idTef\": " + tefVO.getProperty("IDENTIFICACAOTEF") + ","
 						+ "\"idFinanceiro\": " + tefVO.getProperty("NUFIN") + ","
@@ -248,7 +272,7 @@ public class UpdateTef extends SnkIntegrationsApi implements EventoProgramavelJa
 						+ "\"numeroPontoVenda\": \"" + tefVO.getProperty("NUMPV") + "\","
 						+ "\"autorizacao\": \"" + tefVO.getProperty("AUTORIZACAO") + "\","
 						+ "\"desdobramento\": " + tefVO.getProperty("DESDOBRAMENTO") + ","
-						+ "\"dataTransacao\": \"" + tefVO.getProperty("DTTRANSACAO") + "\","
+						+ "\"dataTransacao\": \"" + dataTransacao + "\","
 						+ "\"valorTransacao\": \"" + tefVO.getProperty("VLRTRANSACAO") + "\","
 						+ "\"valorTaxa\": \"" + tefVO.getProperty("VLRTAXA") + "\","
 						+ "\"bandeira\": \"" + tefVO.getProperty("BANDEIRA") + "\","
@@ -263,7 +287,22 @@ public class UpdateTef extends SnkIntegrationsApi implements EventoProgramavelJa
 		return json;
 	}
 
-	private String gerarJsonFinanceiro(ResultSet tgffin, String idUsuario) throws SQLException {
+	private String gerarJsonFinanceiro(ResultSet tgffin, String idUsuario) throws Exception {
+
+		String dataPrazo = tgffin.getString("DTPRAZO");
+
+		Calendar dtPrazo = null;
+		if (dataPrazo != null) {
+			dtPrazo = Calendar.getInstance();
+			try {
+				SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
+				dtPrazo.setTime(format.parse(dataPrazo));
+				format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+				dataPrazo = format.format(dtPrazo.getTime());
+			} catch (Exception e) {
+				throw new Exception("Falha na Data prazo");
+			}
+		}
 
 		String json = "\"financeiroSankhya\": {"
 						+ "\"idFinanceiro\": " + tgffin.getBigDecimal("NUFIN").toString()+ ","
@@ -276,7 +315,7 @@ public class UpdateTef extends SnkIntegrationsApi implements EventoProgramavelJa
 						+ "\"idTipoTitulo\": " + (this.isCredito ? "7" : "28") + ","
 						+ "\"valorDesdobramento\": \"" + this.valorTotalTransacao.toString() + "\","
 						+ "\"recebimentoCartao\": \"S\" ,"
-						+ "\"dataPrazo\": \"" + tgffin.getString("DTPRAZO") + "\" "
+						+ "\"dataPrazo\": \"" +  dataPrazo + "\" "
 				+ "}";
 
 		return json;

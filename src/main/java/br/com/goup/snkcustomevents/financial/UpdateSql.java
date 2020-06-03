@@ -1,9 +1,7 @@
 package br.com.goup.snkcustomevents.financial;
 
-import java.sql.ResultSet;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-
+import br.com.goup.snkcustomevents.SnkIntegrationsApi;
+import br.com.goup.snkcustomevents.utils.IntegrationApi;
 import br.com.sankhya.extensions.eventoprogramavel.EventoProgramavelJava;
 import br.com.sankhya.jape.dao.JdbcWrapper;
 import br.com.sankhya.jape.event.ModifingFields;
@@ -11,8 +9,10 @@ import br.com.sankhya.jape.event.PersistenceEvent;
 import br.com.sankhya.jape.event.TransactionContext;
 import br.com.sankhya.jape.sql.NativeSql;
 import br.com.sankhya.jape.vo.DynamicVO;
-import br.com.goup.snkcustomevents.SnkIntegrationsApi;
-import br.com.goup.snkcustomevents.utils.IntegrationApi;
+
+import java.sql.ResultSet;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 
 public class UpdateSql extends SnkIntegrationsApi implements EventoProgramavelJava{
 	
@@ -72,9 +72,24 @@ public class UpdateSql extends SnkIntegrationsApi implements EventoProgramavelJa
 
 	}
 
-	private String gerarJsonDespesa(PersistenceEvent persistenceEvent) {
+	private String gerarJsonDespesa(PersistenceEvent persistenceEvent) throws Exception {
 
 		DynamicVO financialVO 		  = (DynamicVO) persistenceEvent.getVo();
+
+		String dataPrazo = financialVO.getProperty("DTPRAZO").toString();
+
+		Calendar dtPrazo = null;
+		if (dataPrazo != null) {
+			dtPrazo = Calendar.getInstance();
+			try {
+				SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
+				dtPrazo.setTime(format.parse(dataPrazo));
+				format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+				dataPrazo = format.format(dtPrazo.getTime());
+			} catch (Exception e) {
+				throw new Exception("Falha na Data prazo");
+			}
+		}
 
 		String json = "{"
 				+ "\"idFinanceiro\": " + financialVO.asBigDecimal("NUFIN").toString() + ","
@@ -86,7 +101,7 @@ public class UpdateSql extends SnkIntegrationsApi implements EventoProgramavelJa
 				+ "\"idUsuarioBaixa\": " +  financialVO.asBigDecimal("CODUSU") + ","
 				+ "\"idTipoTitulo\": " + "15" + ","
 				+ "\"valorDesdobramento\": \"" + financialVO.asBigDecimal("VLRDESDOB").toString() + "\","
-				+ "\"dataPrazo\": \"" + financialVO.getProperty("DTPRAZO") + "\" "
+				+ "\"dataPrazo\": \"" + dataPrazo + "\" "
 				+ "}";
 
 		return json;
@@ -116,6 +131,19 @@ public class UpdateSql extends SnkIntegrationsApi implements EventoProgramavelJa
 		String dataPrazo = (modifingFields.isModifing("DTPRAZO")
 				? modifingFields.getNewValue("DTPRAZO").toString()
 				: (financialVO.getProperty("DTPRAZO") != null ? financialVO.getProperty("DTPRAZO").toString() : financialVO.getProperty("DHBAIXA").toString()));
+
+		Calendar dtPrazo = null;
+		if (dataPrazo != null) {
+			dtPrazo = Calendar.getInstance();
+			try {
+				SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
+				dtPrazo.setTime(format.parse(dataPrazo));
+				format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+				dataPrazo = format.format(dtPrazo.getTime());
+			} catch (Exception e) {
+				throw new Exception("Falha na Data prazo");
+			}
+		}
 
 		String json = "{"
 				+ "\"idFinanceiro\": " + financialVO.asBigDecimal("NUFIN").toString() + ","
