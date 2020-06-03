@@ -156,7 +156,11 @@ public class UpdateSql extends SnkIntegrationsApi implements EventoProgramavelJa
 
 				String url = this.urlApi + "/v2/caixas/pagamentos";
 				String token = IntegrationApi.getToken(this.urlApi + "/oauth/token?grant_type=client_credentials", "POST", "Basic c2Fua2h5YXc6U0Bua2h5QDJV");
-				IntegrationApi.sendHttp(url, json, "POST", "Bearer " + token);
+				try {
+					IntegrationApi.sendHttp(url, json, "POST", "Bearer " + token);
+				} catch (Exception e) {
+					throw new Exception("Falha: " + e.getMessage() + "\n" + json);
+				}
 			} else {
 				
 //				if (true) {
@@ -191,7 +195,11 @@ public class UpdateSql extends SnkIntegrationsApi implements EventoProgramavelJa
 
 			String url = this.urlApi + "/v2/caixas/pagamentos";
 			String token = IntegrationApi.getToken(this.urlApi + "/oauth/token?grant_type=client_credentials", "POST", "Basic c2Fua2h5YXc6U0Bua2h5QDJV");
-			IntegrationApi.sendHttp(url, json, "POST", "Bearer " + token);
+			try {
+				IntegrationApi.sendHttp(url, json, "POST", "Bearer " + token);
+			} catch (Exception e) {
+				throw new Exception("Falha: " + e.getMessage() + "\n" + json);
+			}
 		}
 	}
 	
