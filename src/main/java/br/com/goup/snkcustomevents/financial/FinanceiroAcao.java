@@ -265,7 +265,11 @@ public class FinanceiroAcao extends SnkIntegrationsApi implements AcaoRotinaJava
 				throw new Exception("Falha na Data prazo");
 			}
 		}
-		
+
+		if (this.valorTotalTransacao.compareTo(BigDecimal.ZERO) <= 0) {
+			this.valorTotalTransacao = new BigDecimal(registro.getCampo("VLRDESDOB").toString());
+		}
+
 		String json = "{"
 				+ "\"idFinanceiro\": " + registro.getCampo("NUFIN").toString() + ","
 				+ "\"idEmpresa\": " + registro.getCampo("CODEMP").toString() + ","
@@ -275,14 +279,15 @@ public class FinanceiroAcao extends SnkIntegrationsApi implements AcaoRotinaJava
 				+ "\"idTipoOperacao\": " + registro.getCampo("CODTIPOPER").toString() + ","
 				+ "\"idUsuarioBaixa\": " + registro.getCampo("CODUSUBAIXA").toString()+ ","
 				 
-				+ "\"idTipoTitulo\": " + (registro.getCampo("NUCOMPENS") != null ? "26" 
+				+ "\"idTipoTitulo\": " + (registro.getCampo("NUCOMPENS") != null
+										&& !registro.getCampo("CODTIPOPER").toString().equals("4401") ? "26"
 				: registro.getCampo("CODTIPTIT").toString()) + ","
 
 				+ "\"dataBaixa\": " + dataBaixa + ","
 
 				+ "\"valorBaixa\": \"" +  registro.getCampo("VLRBAIXA").toString() + "\","
 
-				+ "\"valorDesdobramento\": \"" + registro.getCampo("VLRDESDOB").toString() + "\","
+				+ "\"valorDesdobramento\": \"" + this.valorTotalTransacao.toString() + "\","
 
 				+ "\"recebimentoCartao\": \"" + (registro.getCampo("RECEBCARTAO") != null ? registro.getCampo("RECEBCARTAO").toString() : "") + "\" ,"
 				+ "\"dataPrazo\": \"" + dataPrazo + "\" "
@@ -296,20 +301,26 @@ public class FinanceiroAcao extends SnkIntegrationsApi implements AcaoRotinaJava
 
 		 String json = "";
 
-	        for (Registro registro: arg0.getLinhas()) {	       
-	        	
-	        	json = this.gerarJsonFinanceiro(registro);
+	        for (Registro registro: arg0.getLinhas()) {
 
+	        	this.valorTotalTransacao = BigDecimal.ZERO;
+
+				String jsonCartao = "";
 	        	if (registro.getCampo("RECEBCARTAO") != null && registro.getCampo("RECEBCARTAO").toString().equalsIgnoreCase("S")) {
 
-					String jsonCartao = "";
 					try {
 						jsonCartao = this.gerarJsonCartao(arg0, registro);
 					} catch (Exception e) {
 						throw new Exception("Falha ao gerar Cartão " + e.getMessage());
 					}
 
-					json       = "{" + "\"financeiroSankhya\": "
+				}
+
+				json = this.gerarJsonFinanceiro(registro);
+
+	        	if (!jsonCartao.trim().isEmpty()) {
+
+	        		json       = "{" + "\"financeiroSankhya\": "
 							+ json + ", "
 							+ jsonCartao
 							+ "} ";
