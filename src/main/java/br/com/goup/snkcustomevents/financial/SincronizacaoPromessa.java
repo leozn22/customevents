@@ -67,6 +67,8 @@ public class SincronizacaoPromessa extends SnkIntegrationsApi implements EventoP
 			String numeroDeposito    = dynVO.asString("NRODESPOSITO");
 			boolean temDeposito      = (numeroDeposito != null && !numeroDeposito.equals("") && !numeroDeposito.equals("null")) ? true : false;
 			BigDecimal valorDeposito = dynVO.asBigDecimal("VALORDEPOSITO");
+			Integer numeroAcerto     = dynVO.asInt("NUACERTO");
+			boolean compensado       = (numeroAcerto != null && numeroAcerto > 0) ? true : false;
 
 			if (
 					dynVO.asString("STATUSPEDIDO").equals("LI")
@@ -78,7 +80,7 @@ public class SincronizacaoPromessa extends SnkIntegrationsApi implements EventoP
 								&& valorDeposito.compareTo(BigDecimal.ZERO) > 0
 							)
 						)
-					&& temDeposito) {
+					&& (temDeposito || compensado)) {
 				acao = "ConfirmarDeposito";
 			}
 
@@ -93,14 +95,14 @@ public class SincronizacaoPromessa extends SnkIntegrationsApi implements EventoP
 			// Na tela de promessa antiga liberava o pedido se o status da promessa estivesse pendente, clicando no botão Liberar Pedido.
 			// Agora, o nome do botão é Liberar Boleto, só que o status que chega é confirmado, como na confirmação de depósito, a diferença
 			// é que no caso do boleto não tem o número do depósito.
-			if (dynVO.asString("STATUSPEDIDO").equals("LI") && dynVO.asString("STATUSPROMESSA").equals("CO") && !temDeposito) {
+			if (dynVO.asString("STATUSPEDIDO").equals("LI") && dynVO.asString("STATUSPROMESSA").equals("CO") && !temDeposito && !compensado) {
 				acao = "LiberarPedido";
 			}
 
-//		if(true) {
-//			String msg = "GERAL\\n - Ação "+acao+" \\n - STATUSPEDIDO: "+dynVO.asString("STATUSPEDIDO")+"\\n - STATUSPROMESSA: "+dynVO.asString("STATUSPROMESSA")+"\\n - NRODESPOSITO: "+numeroDeposito+"\\n - temDeposito: "+temDeposito;
-//			throw new Exception(msg+"\n - dynVO: "+dynVO);
-//		}
+//			if(true) {
+//				String msg = "GERAL\\n - Ação "+acao+" \\n - STATUSPEDIDO: "+dynVO.asString("STATUSPEDIDO")+"\\n - STATUSPROMESSA: "+dynVO.asString("STATUSPROMESSA")+"\\n - NRODESPOSITO: "+numeroDeposito+"\\n - temDeposito: "+temDeposito;
+//				throw new Exception(msg+"\n - dynVO: "+dynVO);
+//			}
 		} catch (Exception e) {
 			throw new Exception("Falha ao definir acao\n" + e.getMessage());
 		}
