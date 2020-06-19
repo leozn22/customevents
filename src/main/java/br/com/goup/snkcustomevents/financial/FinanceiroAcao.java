@@ -60,7 +60,7 @@ public class FinanceiroAcao extends SnkIntegrationsApi implements AcaoRotinaJava
 			String valor         =	jsonLinha.getString("linha").trim();
 
 //			ESTABELECIMENTO
-			if (valor.contains("POS") || valor.contains("823982346832235")) {
+			if (valor.contains("POS=") || valor.contains("823982346832235")) {
 
 				numeroEstabelecimento = valor.replaceAll("\\s*([0-9]+).*", "$1").trim();
 			}
@@ -270,6 +270,9 @@ public class FinanceiroAcao extends SnkIntegrationsApi implements AcaoRotinaJava
 			this.valorTotalTransacao = new BigDecimal(registro.getCampo("VLRDESDOB").toString());
 		}
 
+		String idUsuario = (registro.getCampo("CODUSUBAIXA") != null
+				? registro.getCampo("CODUSUBAIXA").toString() : registro.getCampo("CODUSU").toString());
+
 		String json = "{"
 				+ "\"idFinanceiro\": " + registro.getCampo("NUFIN").toString() + ","
 				+ "\"idEmpresa\": " + registro.getCampo("CODEMP").toString() + ","
@@ -277,7 +280,7 @@ public class FinanceiroAcao extends SnkIntegrationsApi implements AcaoRotinaJava
 				+ "\"numeroNota\": " + registro.getCampo("NUMNOTA").toString() + ","
 				+ "\"idParceiro\": " + registro.getCampo("CODPARC").toString() + ","
 				+ "\"idTipoOperacao\": " + registro.getCampo("CODTIPOPER").toString() + ","
-				+ "\"idUsuarioBaixa\": " + registro.getCampo("CODUSUBAIXA").toString()+ ","
+				+ "\"idUsuarioBaixa\": " + idUsuario + ","
 				 
 				+ "\"idTipoTitulo\": " + (registro.getCampo("NUCOMPENS") != null
 										&& !registro.getCampo("CODTIPOPER").toString().equals("4401") ? "26"
@@ -285,7 +288,7 @@ public class FinanceiroAcao extends SnkIntegrationsApi implements AcaoRotinaJava
 
 				+ "\"dataBaixa\": " + dataBaixa + ","
 
-				+ "\"valorBaixa\": \"" +  registro.getCampo("VLRBAIXA").toString() + "\","
+				+ "\"valorBaixa\": \"" + (registro.getCampo("VLRBAIXA") != null ? registro.getCampo("VLRBAIXA").toString(): "") + "\","
 
 				+ "\"valorDesdobramento\": \"" + this.valorTotalTransacao.toString() + "\","
 
