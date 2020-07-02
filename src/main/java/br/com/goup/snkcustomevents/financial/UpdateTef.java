@@ -29,6 +29,8 @@ public class UpdateTef extends SnkIntegrationsApi implements EventoProgramavelJa
 
 	private boolean isCredito = true;
 
+	private int qtdException = 0;
+
 	private BigDecimal valorTotalTransacao = BigDecimal.ZERO;
 
 
@@ -321,6 +323,23 @@ public class UpdateTef extends SnkIntegrationsApi implements EventoProgramavelJa
 		return json;
 	}
 
+
+	private void enviarDados(String json) throws Exception {
+
+		this.qtdException++;
+		String url = this.urlApi + "/v2/caixas/cartoes";
+		String token = IntegrationApi.getToken(this.urlApi + "/oauth/token?grant_type=client_credentials", "POST", "Basic c2Fua2h5YXc6U0Bua2h5QDJV");
+		try {
+			IntegrationApi.sendHttp(url, json, "POST", "Bearer " + token);
+		} catch (Exception e) {
+			if (this.qtdException < 2) {
+				enviarDados(json);
+			}
+//			throw new Exception("Falha: " + e.getMessage() + "\n" + json);
+		}
+		this.qtdException = 0;
+	}
+
 	private void enviarDadosCartao(PersistenceEvent persistenceEvent) throws Exception {
 
 		DynamicVO tefVO   = (DynamicVO) persistenceEvent.getVo();
@@ -394,14 +413,7 @@ public class UpdateTef extends SnkIntegrationsApi implements EventoProgramavelJa
 //				}
 
 //				PROCESSO V2
-				String url = this.urlApi + "/v2/caixas/cartoes";
-				String token = IntegrationApi.getToken(this.urlApi + "/oauth/token?grant_type=client_credentials", "POST", "Basic c2Fua2h5YXc6U0Bua2h5QDJV");
-				try {
-					IntegrationApi.sendHttp(url, json, "POST", "Bearer " + token);
-				} catch (Exception e) {
-					throw new Exception("Falha: " + e.getMessage() + "\n" + json);
-				}
-
+				this.enviarDados(json);
 
 //				if (true) {
 //					throw new Exception(jsonTef);

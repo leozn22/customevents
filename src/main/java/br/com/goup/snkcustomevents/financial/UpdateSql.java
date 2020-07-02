@@ -15,7 +15,9 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
 public class UpdateSql extends SnkIntegrationsApi implements EventoProgramavelJava{
-	
+
+	private int qtdException = 0;
+
 	public UpdateSql() {
 		this.exigeAutenticacao = true;
 		// QUANDO ALTERAR O PARÂMETRO ABAIXO, DEVE ALTERAR DA MESMA FORMA NOS ARQUIVOS: ItemAcao.java e UpdateTef.java
@@ -180,6 +182,20 @@ public class UpdateSql extends SnkIntegrationsApi implements EventoProgramavelJa
 
 	}
 
+	private void enviarDadosV2(String verboHttp, String url, String json) throws Exception {
+		this.qtdException++;
+		String token = IntegrationApi.getToken(this.urlApi + "/oauth/token?grant_type=client_credentials", "POST", "Basic c2Fua2h5YXc6U0Bua2h5QDJV");
+		try {
+			IntegrationApi.sendHttp(url, json, verboHttp, "Bearer " + token);
+		} catch (Exception e) {
+			if (this.qtdException < 2) {
+				enviarDadosV2(verboHttp, url, json);
+			}
+//			throw new Exception("Falha: " + e.getMessage() + "\n" + json);
+		}
+		this.qtdException = 0;
+	}
+
 	private void financial(PersistenceEvent persistenceEvent) throws Exception {
 
 		DynamicVO financialVO = (DynamicVO) persistenceEvent.getVo();
@@ -215,12 +231,7 @@ public class UpdateSql extends SnkIntegrationsApi implements EventoProgramavelJa
 //				}
 
 				String url = this.urlApi + "/v2/caixas/pagamentos";
-				String token = IntegrationApi.getToken(this.urlApi + "/oauth/token?grant_type=client_credentials", "POST", "Basic c2Fua2h5YXc6U0Bua2h5QDJV");
-				try {
-					IntegrationApi.sendHttp(url, json, "POST", "Bearer " + token);
-				} catch (Exception e) {
-					throw new Exception("Falha: " + e.getMessage() + "\n" + json);
-				}
+				this.enviarDadosV2("POST", url, json);
 			} else {
 				
 //				if (true) {
