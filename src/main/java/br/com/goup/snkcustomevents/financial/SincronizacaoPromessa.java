@@ -160,42 +160,74 @@ public class SincronizacaoPromessa extends SnkIntegrationsApi implements EventoP
 	private String getJsonDeposito(PersistenceEvent persistenceEvent, String situacaoComprovante) throws Exception {
 
 		try {
-
-
-		DynamicVO dynVO   = (DynamicVO) persistenceEvent.getVo();
-		BigDecimal nunota = dynVO.asBigDecimal("NUNOTA");
-		String retorno    = "{}";
-		String sql        = "" +
-				"SELECT " + 
-				"    C.NUMNOTA, " + 
-				"    PRC.AD_CODPARCEXT " + 
-				"FROM " + 
-				"    TGFCAB C " + 
-				"    INNER JOIN TGFPAR PRC ON PRC.CODPARC = C.CODPARC " + 
-				"WHERE " + 
-				"    C.NUNOTA = :nunota";
-		
-		
-		JdbcWrapper jdbc = persistenceEvent.getJdbcWrapper();
-		NativeSql query  = new NativeSql(jdbc);
-		query.setNamedParameter("nunota", nunota);
-		ResultSet result = query.executeQuery(sql);
-
-		if (result.next()) {
-			BigDecimal numnota        = result.getBigDecimal("NUMNOTA");
-			BigDecimal codigoParceiro = result.getBigDecimal("AD_CODPARCEXT");
+			DynamicVO dynVO   = (DynamicVO) persistenceEvent.getVo();
+			BigDecimal nunota = dynVO.asBigDecimal("NUNOTA");
+			String retorno    = "{}";
+			String sql        = "" +
+					"SELECT " + 
+					"    C.NUMNOTA, " + 
+					"    PRC.AD_CODPARCEXT " + 
+					"FROM " + 
+					"    TGFCAB C " + 
+					"    INNER JOIN TGFPAR PRC ON PRC.CODPARC = C.CODPARC " + 
+					"WHERE " + 
+					"    C.NUNOTA = :nunota";
 			
-			retorno = "{"
-					+ "    'numnota': "+numnota+", "
-					+ "    'situacaoComprovante': '"+situacaoComprovante+"', "
-					+ "    'codigoParceiro': "+codigoParceiro+""
-					+ "}";
-		}
-		
-		return retorno;
+			
+			JdbcWrapper jdbc = persistenceEvent.getJdbcWrapper();
+			NativeSql query  = new NativeSql(jdbc);
+			query.setNamedParameter("nunota", nunota);
+			ResultSet result = query.executeQuery(sql);
+	
+			if (result.next()) {
+				BigDecimal numnota        = result.getBigDecimal("NUMNOTA");
+				BigDecimal codigoParceiro = result.getBigDecimal("AD_CODPARCEXT");
+				
+				retorno = "{"
+						+ "    'numnota': "+numnota+", "
+						+ "    'situacaoComprovante': '"+situacaoComprovante+"', "
+						+ "    'codigoParceiro': "+codigoParceiro+""
+						+ "}";
+			}
+			
+			return retorno;
 		} catch (Exception e) {
 			throw new Exception("Erro ao gerar Json\n" + e.getMessage());
 		}
+	}
+	
+	private boolean validarNumeroComprovante(PersistenceEvent persistenceEvent) throws Exception {
+		DynamicVO dynVO    = (DynamicVO) persistenceEvent.getVo();
+		BigDecimal nunota  = dynVO.asBigDecimal("NUNOTA");
+		String nrodeposito = dynVO.asString("NRODESPOSITO");
+		boolean retorno    = false;
+		String sql         = "" +
+				"SELECT " + 
+				"	COUNT(NUFIN) AS TOT " + 
+				"FROM  " + 
+				"	TGFFIN F " + 
+				"	INNER JOIN " + 
+				"	( " + 
+				"		SELECT DISTINCT NUMNOTA FROM TGFFIN F WHERE F.NUNOTA = :nunota " + 
+				"	) F2 ON F2.NUMNOTA = F.NUMNOTA " + 
+				"WHERE " + 
+				"	F.BH_NRODEPOSITO = :nrodeposito";
+
+		JdbcWrapper jdbc = persistenceEvent.getJdbcWrapper();
+		NativeSql query  = new NativeSql(jdbc);
+		query.setNamedParameter("nunota", nunota);
+		query.setNamedParameter("nrodeposito", nrodeposito);
+		ResultSet result = query.executeQuery(sql);
+
+		if (result.next()) {
+			Integer total = result.getInt("TOT");
+
+			if(total > 1) {
+				retorno = true;
+			}
+		}
+		
+		return retorno;
 	}
 	
 	@Override
@@ -213,6 +245,12 @@ public class SincronizacaoPromessa extends SnkIntegrationsApi implements EventoP
 	public void afterUpdate(PersistenceEvent arg0) throws Exception {
 		try {
 			DynamicVO dynVO = (DynamicVO) arg0.getVo();
+			boolean comprovanteExistente = this.validarNumeroComprovante(arg0);
+			
+			if(comprovanteExistente) {
+				throw new Exception("Este número de comprovante já foi utilizado neste pedido!");
+			}
+
 			BigDecimal valorDeposito = dynVO.asBigDecimal("VALORDEPOSITO");
 			if (!(dynVO.asString("STATUSPEDIDO").equals("LI") && dynVO.asString("STATUSPROMESSA").equals("PE")
 					&& valorDeposito != null
