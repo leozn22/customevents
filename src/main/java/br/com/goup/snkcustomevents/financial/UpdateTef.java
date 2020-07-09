@@ -72,9 +72,10 @@ public class UpdateTef extends SnkIntegrationsApi implements EventoProgramavelJa
 			String valor         =	jsonLinha.getString("linha").trim();
 
 //			ESTABELECIMENTO
-			if (valor.contains("POS") || valor.contains("823982346832235")) {
+			if (valor.contains("/POS") || valor.contains("823982346832235")) {
 
 				numeroEstabelecimento = valor.replaceAll("\\s*([0-9]+).*", "$1").trim();
+				numeroEstabelecimento = numeroEstabelecimento.trim().substring(2, numeroEstabelecimento.trim().length() - 4);
 			}
 
 //			TIPO NEGOCIAÇÃO
@@ -200,7 +201,7 @@ public class UpdateTef extends SnkIntegrationsApi implements EventoProgramavelJa
 			creLog.set("TAXAADM", tefVO.getProperty("VLRTAXA"));
 			creLog.set("NUBAN", idBandeira);
 			//creLog.set("NUCARTAO", "");
-			creLog.set("NUESTABELECIMENTO", numeroEstabelecimento.trim().substring(2, numeroEstabelecimento.trim().length() - 4));
+			creLog.set("NUESTABELECIMENTO", numeroEstabelecimento);
 			creLog.set("DTPAGCARTAO", tefVO.getProperty("DTTRANSACAO"));
 			creLog.set("CODAUT", tefVO.getProperty("AUTORIZACAO").toString());
 			creLog.set("NUNOTA", idNota);
@@ -231,7 +232,7 @@ public class UpdateTef extends SnkIntegrationsApi implements EventoProgramavelJa
 					+ "\"idTipoProduto\": " + idProduto + ","
 					+ "\"idBandeira\": " + idBandeira + ","
 					+ "\"idPagamento\": \"0\", "
-					+ "\"idEstabelecimento\": \"" +  numeroEstabelecimento.trim().substring(2, numeroEstabelecimento.trim().length() - 4) + "\","
+					+ "\"idEstabelecimento\": \"" +  numeroEstabelecimento + "\","
 					+ "\"descricaoProduto\": \"" + bandeira + "\","
 					+ "\"codigoAutorizacao\": \"" + tefVO.getProperty("AUTORIZACAO").toString() + "\","
 					+ "\"nsu\": \"" + tefVO.getProperty("NUMNSU").toString() + "\","

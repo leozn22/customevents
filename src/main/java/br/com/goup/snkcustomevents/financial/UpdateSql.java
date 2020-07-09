@@ -201,6 +201,10 @@ public class UpdateSql extends SnkIntegrationsApi implements EventoProgramavelJa
 		DynamicVO financialVO = (DynamicVO) persistenceEvent.getVo();
 
 		ModifingFields modifingFields = persistenceEvent.getModifingFields();
+		int idCaixa  = (modifingFields.isModifing("CODCTABCOINT")
+				? Integer.parseInt(modifingFields.getNewValue("CODCTABCOINT").toString())
+				: financialVO.asInt("CODCTABCOINT"));
+
 		if(modifingFields.isModifing("DHBAIXA")
 				&& financialVO.asInt("RECDESP") == 1
 				&& (financialVO.asInt("CODTIPTIT") == 2
@@ -213,9 +217,7 @@ public class UpdateSql extends SnkIntegrationsApi implements EventoProgramavelJa
 					|| financialVO.asInt("CODTIPOPER") == 4104
 					|| financialVO.asInt("CODTIPOPER") == 3107
 				    || (financialVO.asInt("CODTIPOPER") == 3106
-							&& (modifingFields.isModifing("CODCTABCOINT")
-									? Integer.parseInt(modifingFields.getNewValue("CODCTABCOINT").toString())
-									: financialVO.asInt("CODCTABCOINT")) == 21)))
+							&& (idCaixa == 21 || idCaixa == 23))))
 		{
 			if (modifingFields.getNewValue("DHBAIXA") != null) {
 //			PROCESSO V1
