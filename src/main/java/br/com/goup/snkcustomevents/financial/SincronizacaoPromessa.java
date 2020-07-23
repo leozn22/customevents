@@ -2,6 +2,8 @@ package br.com.goup.snkcustomevents.financial;
 
 import java.math.BigDecimal;
 import java.sql.ResultSet;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 
 import br.com.goup.snkcustomevents.SnkIntegrationsApi;
 import br.com.goup.snkcustomevents.utils.IntegrationApi;
@@ -109,7 +111,68 @@ public class SincronizacaoPromessa extends SnkIntegrationsApi implements EventoP
 		
 		return acao;
 	}
-	
+
+	private String gerarJsonFinanceiro(ResultSet tgffin, Integer idUsuario, String dataBaixa, BigDecimal valorPromessa) throws Exception {
+
+		String dataPrazo = tgffin.getString("DTPRAZO");
+
+		Calendar dtPrazo = null;
+		if (dataPrazo != null) {
+			dtPrazo = Calendar.getInstance();
+			try {
+				SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
+				dtPrazo.setTime(format.parse(dataPrazo));
+				format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+				dataPrazo = format.format(dtPrazo.getTime());
+			} catch (Exception e) {
+				throw new Exception("Falha na Data prazo");
+			}
+		}
+
+		if (dataBaixa != null) {
+			try {
+				Calendar dtBaixa = Calendar.getInstance();
+				SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
+				dtBaixa.setTime(format.parse(dataBaixa));
+				format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+				dataBaixa = format.format(dtBaixa.getTime());
+			} catch (Exception e) {
+				throw new Exception("Falha na Data Baixa");
+			}
+		}
+
+
+		String json = "\"financeiroSankhya\": {"
+				+ "\"idFinanceiro\": " + tgffin.getBigDecimal("NUFIN").toString()+ ","
+				+ "\"idEmpresa\": " + tgffin.getBigDecimal("CODEMP").toString() + ","
+				+ "\"idNota\": " + tgffin.getBigDecimal("NUNOTA") + ","
+				+ "\"numeroNota\": " + tgffin.getBigDecimal("NUMNOTA").toString() + ","
+				+ "\"idParceiro\": " + tgffin.getBigDecimal("CODPARC").toString() + ","
+				+ "\"idTipoOperacao\": " + tgffin.getBigDecimal("CODTIPOPER").toString() + ","
+				+ "\"idUsuarioBaixa\": " + idUsuario + ","
+				+ "\"idTipoTitulo\": " + tgffin.getBigDecimal("CODTIPTIT").toString() + ","
+				+ "\"valorDesdobramento\": \"" + valorPromessa.toString() + "\","
+				+ "\"valorBaixa\": \"" + valorPromessa.toString() + "\","
+				+ "\"recebimentoCartao\": \"N\" ,"
+				+ "\"dataBaixa\": \"" +  dataBaixa + "\", "
+				+ "\"dataPrazo\": \"" +  dataPrazo + "\" "
+				+ "}";
+
+		return json;
+	}
+
+	private String gerarJsonPromessa(DynamicVO prmVO) {
+
+		String json = "\"promessaSankhya\": {"
+				+ "\"idNota\": " + prmVO.asBigDecimal("NUNOTA") + ","
+				+ "\"idAdiantamento\": " + prmVO.asBigDecimal("NUADIANTAMENTO") + ","
+				+ "\"idContaBancaria\": " + prmVO.asBigDecimal("CODCTABCOINT")
+				+ "}";
+
+		return json;
+
+	}
+
 	private boolean executarAcao(String acao, PersistenceEvent persistenceEvent) throws Exception {
 		boolean retorno = false;
 		String url      = "";
@@ -118,9 +181,63 @@ public class SincronizacaoPromessa extends SnkIntegrationsApi implements EventoP
 
 		switch (acao) {
 			case "ConfirmarDeposito":
-				metodo = "PUT";
-				json   = this.getJsonDeposito(persistenceEvent, "");
-				url    = this.urlApi+"/v2/promessas/deposito";
+
+				DynamicVO prmVO = (DynamicVO) persistenceEvent.getVo();
+				int codigoUsuario;
+
+				try {
+					codigoUsuario = prmVO.asBigDecimal("AD_CODUSU").intValue();
+				}
+				catch (Exception e) { codigoUsuario = 0; }
+
+				if (codigoUsuario == 202) {
+
+					JdbcWrapper jdbc 	  = persistenceEvent.getJdbcWrapper();
+					NativeSql sql		  = new NativeSql(jdbc);
+					StringBuffer consulta = new StringBuffer();
+
+					consulta.append(" SELECT ");
+					consulta.append(" 	NUFIN, ");
+					consulta.append(" 	CODEMP, ");
+					consulta.append(" 	NUNOTA, ");
+					consulta.append(" 	NUMNOTA, ");
+					consulta.append(" 	CODPARC, ");
+					consulta.append(" 	CODTIPOPER, ");
+					consulta.append(" 	CODTIPTIT, ");
+					consulta.append(" 	VLRDESDOB, ");
+					consulta.append(" 	DTPRAZO ");
+					consulta.append(" FROM  ");
+					consulta.append(" 	TGFFIN  ");
+					consulta.append(" WHERE ");
+					consulta.append(" 	NUNOTA = :NUNOTA ");
+					consulta.append(" 	AND CODTIPTIT = 15 ");
+//					if (true) {
+//						throw new Exception(prmVO.getProperty("DATADEPOSITO") + "\n" + prmVO.getProperty("VALORDEPOSITO") +  "\n" + prmVO.getProperty("NUNOTA"));
+//					}
+
+					sql.setNamedParameter("NUNOTA", prmVO.getProperty("NUNOTA"));
+					ResultSet result = sql.executeQuery(consulta.toString());
+					if (result.next()) {
+						String jsonFin = this.gerarJsonFinanceiro(result, codigoUsuario, prmVO.getProperty("DATADEPOSITO").toString(), prmVO.asBigDecimal("VALORDEPOSITO"));
+						String jsonPromessa = this.gerarJsonPromessa(prmVO);
+
+						json = "{"
+								+ jsonFin + ", "
+								+ jsonPromessa
+								+ "} ";
+
+						metodo = "POST";
+						url    = this.urlApi + "/v2/caixas/depositos";
+					}
+				} else {
+					metodo = "PUT";
+					json   = this.getJsonDeposito(persistenceEvent, "");
+					url    = this.urlApi+"/v2/promessas/deposito?assincrono=true";
+				}
+
+//				if (true) {
+//					throw new Exception(url + "\n" + codigoUsuario + "\n" +  json);
+//				}
 				break;
 
 			case "CancelarDeposito":
@@ -148,7 +265,11 @@ public class SincronizacaoPromessa extends SnkIntegrationsApi implements EventoP
 		
 		if(!url.isEmpty()) {
 			String token = IntegrationApi.getToken(this.urlApi + "/oauth/token?grant_type=client_credentials", "POST", "Basic c2Fua2h5YXc6U0Bua2h5QDJV");
-			IntegrationApi.sendHttp(url, json, metodo, "Bearer " + token);
+			try {
+				IntegrationApi.sendHttp(url, json, metodo, "Bearer " + token);
+			} catch (Exception e) {
+				throw new Exception(json);
+			}
 			retorno = true;
 			//throw new Exception(token);
 			//throw new Exception("url: "+url+" - json: "+json+" - metodo: "+metodo+" - Autenticacao: Bearer " + token);
