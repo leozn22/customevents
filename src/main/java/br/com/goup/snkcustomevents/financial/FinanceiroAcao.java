@@ -12,6 +12,7 @@ import br.com.sankhya.extensions.actionbutton.ContextoAcao;
 import br.com.sankhya.extensions.actionbutton.QueryExecutor;
 import br.com.sankhya.extensions.actionbutton.Registro;
 import br.com.sankhya.jape.dao.JdbcWrapper;
+import br.com.sankhya.jape.event.ModifingFields;
 import br.com.sankhya.jape.event.PersistenceEvent;
 import br.com.sankhya.jape.sql.NativeSql;
 import br.com.sankhya.jape.vo.DynamicVO;
@@ -23,9 +24,11 @@ import org.json.JSONObject;
 
 public class FinanceiroAcao extends SnkIntegrationsApi implements AcaoRotinaJava {
 
+	private int qtdException = 0;
+
 	public FinanceiroAcao() {
         this.exigeAutenticacao = true;	
-        this.forceUrl("AllTest"); // Opções: LocalTest, ProductionTest, AllTest, Production
+        this.forceUrl("Production"); // Opções: LocalTest, ProductionTest, AllTest, Production
     }
 
 	private boolean isCredito = true;
@@ -236,6 +239,31 @@ public class FinanceiroAcao extends SnkIntegrationsApi implements AcaoRotinaJava
 		return json;
 	}
 
+	private String gerarJsonPromessa(ContextoAcao arg0, Registro registro) throws Exception {
+
+		QueryExecutor tzaPrm = arg0.getQuery();
+
+		StringBuffer consulta = new StringBuffer();
+		consulta.append("    SELECT NUNOTA,");
+		consulta.append("    		NUFINDESPADIANT,  ");
+		consulta.append("    		NRODESPOSITO,  ");
+		consulta.append("    		CODCTABCOINT  ");
+		consulta.append("      FROM TZAPRM  ");
+		consulta.append("     WHERE NUNOTA = " + registro.getCampo("NUNOTA").toString());
+
+		tzaPrm.nativeSelect(consulta.toString());
+		tzaPrm.next();
+
+		String json = "\"promessaSankhya\": {"
+				+ "\"idNota\": " + tzaPrm.getString("NUNOTA") + ","
+				+ "\"idAdiantamento\": " + tzaPrm.getString("NUFINDESPADIANT") + ","
+				+ "\"numeroDeposito\": \"" +  tzaPrm.getString("NRODESPOSITO") + "\", "
+				+ "\"idContaBancaria\": " + tzaPrm.getString("CODCTABCOINT")
+				+ "}";
+
+		return json;
+	}
+
 	private String gerarJsonFinanceiro(Registro registro) throws Exception {
 
 		String dataBaixa = registro.getCampo("DHBAIXA") != null ? registro.getCampo("DHBAIXA").toString() : null;
@@ -273,17 +301,22 @@ public class FinanceiroAcao extends SnkIntegrationsApi implements AcaoRotinaJava
 		String idUsuario = (registro.getCampo("CODUSUBAIXA") != null
 				? registro.getCampo("CODUSUBAIXA").toString() : registro.getCampo("CODUSU").toString());
 
+		String tipoOperacao = registro.getCampo("CODTIPOPER").toString();
+		if (tipoOperacao.equalsIgnoreCase("4400")) {
+			tipoOperacao = "4401";
+		}
+
 		String json = "{"
 				+ "\"idFinanceiro\": " + registro.getCampo("NUFIN").toString() + ","
 				+ "\"idEmpresa\": " + registro.getCampo("CODEMP").toString() + ","
 				+ "\"idNota\": " + registro.getCampo("NUNOTA") + ","
 				+ "\"numeroNota\": " + registro.getCampo("NUMNOTA").toString() + ","
 				+ "\"idParceiro\": " + registro.getCampo("CODPARC").toString() + ","
-				+ "\"idTipoOperacao\": " + registro.getCampo("CODTIPOPER").toString() + ","
+				+ "\"idTipoOperacao\": " + tipoOperacao + ","
 				+ "\"idUsuarioBaixa\": " + idUsuario + ","
 				 
 				+ "\"idTipoTitulo\": " + (registro.getCampo("NUCOMPENS") != null
-										&& !registro.getCampo("CODTIPOPER").toString().equals("4401") ? "26"
+										&& !tipoOperacao.equals("4401") ? "26"
 				: registro.getCampo("CODTIPTIT").toString()) + ","
 
 				+ "\"dataBaixa\": " + dataBaixa + ","
@@ -297,6 +330,20 @@ public class FinanceiroAcao extends SnkIntegrationsApi implements AcaoRotinaJava
 				+ "}";
 
 		return json;
+	}
+
+	private void enviarDadosV2(String verboHttp, String url, String json) throws Exception {
+		this.qtdException++;
+		String token = IntegrationApi.getToken(this.urlApi + "/oauth/token?grant_type=client_credentials", "POST", "Basic c2Fua2h5YXc6U0Bua2h5QDJV");
+		try {
+			IntegrationApi.sendHttp(url, json, verboHttp, "Bearer " + token);
+		} catch (Exception e) {
+			if (this.qtdException < 2) {
+				enviarDadosV2(verboHttp, url, json);
+			}
+//			throw new Exception("Falha: " + e.getMessage() + "\n" + json);
+		}
+		this.qtdException = 0;
 	}
 	
 	@Override
@@ -319,6 +366,15 @@ public class FinanceiroAcao extends SnkIntegrationsApi implements AcaoRotinaJava
 
 				}
 
+				String jsonPromessa = "";
+				if (registro.getCampo("CODTIPTIT").toString().equals("15")) {
+					try {
+						jsonPromessa = this.gerarJsonPromessa(arg0, registro);
+					} catch (Exception e) {
+						throw new Exception("Falha ao gerar Cartão " + e.getMessage());
+					}
+				}
+
 				json = this.gerarJsonFinanceiro(registro);
 
 	        	if (!jsonCartao.trim().isEmpty()) {
@@ -329,17 +385,31 @@ public class FinanceiroAcao extends SnkIntegrationsApi implements AcaoRotinaJava
 							+ "} ";
 				}
 
+	        	if (!jsonPromessa.trim().isEmpty()) {
+
+					json       = "{" + "\"financeiroSankhya\": "
+							+ json + ", "
+							+ jsonPromessa
+							+ "} ";
+				}
+
 			 	if (!json.isEmpty()) {
 	 	            String url   = this.urlApi + "/v2/caixas/pagamentos";
 	 	            if (registro.getCampo("RECEBCARTAO") != null && registro.getCampo("RECEBCARTAO").toString().equalsIgnoreCase("S")) {
 						url   = this.urlApi + "/v2/caixas/cartoes";
 					}
-	 	            String token = IntegrationApi.getToken(this.urlApi + "/oauth/token?grant_type=client_credentials", "POST", "Basic c2Fua2h5YXc6U0Bua2h5QDJV");
-	 	            try {
-	 	            	IntegrationApi.sendHttp(url, json, "POST", "Bearer " + token);
-	 	            } catch (Exception e) {
-	 	            	throw new Exception("Falha: " + e.getMessage() + "\n" + json);
+
+					if (registro.getCampo("CODTIPTIT").toString().equals("15")) {
+						url   = this.urlApi + "/v2/caixas/depositos";
 					}
+
+//	 	            String token = IntegrationApi.getToken(this.urlApi + "/oauth/token?grant_type=client_credentials", "POST", "Basic c2Fua2h5YXc6U0Bua2h5QDJV");
+//	 	            try {
+//	 	            	IntegrationApi.sendHttp(url, json, "POST", "Bearer " + token);
+//	 	            } catch (Exception e) {
+//	 	            	throw new Exception("Falha: " + e.getMessage() + "\n" + json);
+//					}
+					this.enviarDadosV2("POST", url, json);
 	 	            String mensagem = "Solicitacao enviada com sucesso!";
 	 	            arg0.setMensagemRetorno(mensagem);
 	 	        }
