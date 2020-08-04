@@ -33,7 +33,7 @@ public class SincronizacaoPromessa extends SnkIntegrationsApi implements EventoP
 
 	public SincronizacaoPromessa() {
 		this.exigeAutenticacao = true;
-		this.forceUrl("Production"); // Opções: LocalTest, ProductionTest, AllTest, Production
+		this.forceUrl("AllTest"); // Opções: LocalTest, ProductionTest, AllTest, Production
 	}
 	
 	private void enviarDados(PersistenceEvent persistenceEvent) throws Exception {
@@ -85,8 +85,23 @@ public class SincronizacaoPromessa extends SnkIntegrationsApi implements EventoP
 		String acao              = "";
 		try {
 
-			String numeroDeposito    = dynVO.asString("NRODESPOSITO");
-			boolean temDeposito      = (numeroDeposito != null && !numeroDeposito.equals("") && !numeroDeposito.equals("null")) ? true : false;
+			String numeroDeposito   = dynVO.asString("NRODESPOSITO");
+			BigDecimal idconta      = dynVO.asBigDecimal("CODCTABCOINT");
+			String conta = "";
+			if (idconta != null) {
+				conta = idconta.toString();
+			}
+			if (modifingFields.isModifing("CODCTABCOINT")) {
+				conta = modifingFields.getNewValue("CODCTABCOINT").toString();
+			}
+
+			boolean temDeposito      = (numeroDeposito != null
+										&& !numeroDeposito.equals("")
+										&& !numeroDeposito.equals("null")
+										&& conta != null
+										&& !conta.equals("")
+										&& !conta.equals("null")) ? true : false;
+
 			BigDecimal valorDeposito = BigDecimal.ZERO;
 			if (modifingFields.isModifing("VALORDEPOSITO")) {
 				valorDeposito = modifingFields.getNewValue("VALORDEPOSITO") != null ? new BigDecimal(modifingFields.getNewValue("VALORDEPOSITO").toString()) : BigDecimal.ZERO;
@@ -232,11 +247,25 @@ public class SincronizacaoPromessa extends SnkIntegrationsApi implements EventoP
 			idAdiantamento =  new BigDecimal(prmVO.getProperty("NUFINDESPADIANT").toString());
 		}
 
+		String dataDeposito =  prmVO.getProperty("DATADEPOSITO").toString();
+		Calendar dtDeposito = null;
+		if (dataDeposito != null) {
+			dtDeposito = Calendar.getInstance();
+			try {
+				SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
+				dtDeposito.setTime(format.parse(dataDeposito));
+				format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+				dataDeposito = format.format(dtDeposito.getTime());
+			} catch (Exception e) {
+				throw new Exception("Falha na Data Depósito");
+			}
+		}
 
 		String json = "\"promessaSankhya\": {"
 				+ "\"idNota\": " + prmVO.asBigDecimal("NUNOTA") + ","
 				+ "\"idAdiantamento\": " + idAdiantamento + ","
 				+ "\"numeroDeposito\": \"" +  numeroDeposito + "\", "
+				+ "\"dataDeposito\": \"" +  dataDeposito + "\", "
 				+ "\"idContaBancaria\": " + idContaBancaria
 				+ "}";
 
@@ -357,12 +386,18 @@ public class SincronizacaoPromessa extends SnkIntegrationsApi implements EventoP
 				consulta.append(" 	TGFFIN  ");
 				consulta.append(" WHERE ");
 				consulta.append(" 	NUNOTA = :NUNOTA ");
-				consulta.append(" 	AND CODTIPTIT IN (15, 0, 26) ");
-
+				consulta.append(" 	AND CODTIPTIT IN (15, 0) ");
+//
 				sql.setNamedParameter("NUNOTA", prmVO.getProperty("NUNOTA"));
+//				ResultSet result = sql.executeQuery(consulta.toString() + " AND CODTIPTIT = 15");
 				ResultSet result = sql.executeQuery(consulta.toString());
+//				if (!result.next()) {
+//					result = sql.executeQuery(consulta.toString() + " AND CODTIPTIT = 0");
+//					if (!result.next()) {
+//						result = sql.executeQuery(consulta.toString() + " AND CODTIPTIT = 26");
+//					}
+//				}
 				if (result.next()) {
-
 
 					if (result.getBigDecimal("CODTIPOPER").intValue() == 3118) {
 

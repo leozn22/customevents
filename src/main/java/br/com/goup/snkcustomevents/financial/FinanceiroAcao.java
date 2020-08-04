@@ -28,7 +28,7 @@ public class FinanceiroAcao extends SnkIntegrationsApi implements AcaoRotinaJava
 
 	public FinanceiroAcao() {
         this.exigeAutenticacao = true;	
-        this.forceUrl("Production"); // Opções: LocalTest, ProductionTest, AllTest, Production
+        this.forceUrl("AllTest"); // Opções: LocalTest, ProductionTest, AllTest, Production
     }
 
 	private boolean isCredito = true;
@@ -240,25 +240,35 @@ public class FinanceiroAcao extends SnkIntegrationsApi implements AcaoRotinaJava
 	}
 
 	private String gerarJsonPromessa(ContextoAcao arg0, Registro registro) throws Exception {
+//
+//		QueryExecutor tzaPrm = arg0.getQuery();
+//
+//		StringBuffer consulta = new StringBuffer();
+//		consulta.append("    SELECT NUNOTA,");
+//		consulta.append("    		NUFINDESPADIANT,  ");
+//		consulta.append("    		NRODESPOSITO,  ");
+//		consulta.append("    		VALORDEPOSITO,  ");
+//		consulta.append("    		CODCTABCOINT  ");
+//		consulta.append("      FROM TZAPRM  ");
+//		consulta.append("     WHERE NUNOTA = " + registro.getCampo("NUNOTA").toString());
+//		consulta.append("     AND NRODESPOSITO = '" + registro.getCampo("BH_NRODEPOSITO").toString() + "'");
+//
+//		if (true) {
+//			throw new Exception(consulta.toString());
+//		}
+//
+//		tzaPrm.nativeSelect(consulta.toString());
+//		tzaPrm.next();
 
-		QueryExecutor tzaPrm = arg0.getQuery();
-
-		StringBuffer consulta = new StringBuffer();
-		consulta.append("    SELECT NUNOTA,");
-		consulta.append("    		NUFINDESPADIANT,  ");
-		consulta.append("    		NRODESPOSITO,  ");
-		consulta.append("    		CODCTABCOINT  ");
-		consulta.append("      FROM TZAPRM  ");
-		consulta.append("     WHERE NUNOTA = " + registro.getCampo("NUNOTA").toString());
-
-		tzaPrm.nativeSelect(consulta.toString());
-		tzaPrm.next();
+//		this.valorTotalTransacao = new BigDecimal(tzaPrm.getString("VALORDEPOSITO"));
+		this.valorTotalTransacao = new BigDecimal( registro.getCampo("BH_VLRDEPOSITO").toString());
 
 		String json = "\"promessaSankhya\": {"
-				+ "\"idNota\": " + tzaPrm.getString("NUNOTA") + ","
-				+ "\"idAdiantamento\": " + tzaPrm.getString("NUFINDESPADIANT") + ","
-				+ "\"numeroDeposito\": \"" +  tzaPrm.getString("NRODESPOSITO") + "\", "
-				+ "\"idContaBancaria\": " + tzaPrm.getString("CODCTABCOINT")
+				+ "\"idNota\": " + registro.getCampo("NUNOTA").toString() + ","
+//				+ "\"idAdiantamento\": " + tzaPrm.getString("NUFINDESPADIANT") + ","
+				+ "\"numeroDeposito\": \"" +  registro.getCampo("BH_NRODEPOSITO").toString() + "\", "
+//				+ "\"idContaBancaria\": " + tzaPrm.getString("CODCTABCOINT")
+				+ "\"idContaBancaria\": " + registro.getCampo("BH_CODCTABCOINTDEPOSITO").toString()
 				+ "}";
 
 		return json;
@@ -298,6 +308,12 @@ public class FinanceiroAcao extends SnkIntegrationsApi implements AcaoRotinaJava
 			this.valorTotalTransacao = new BigDecimal(registro.getCampo("VLRDESDOB").toString());
 		}
 
+		BigDecimal valorBaixa = (registro.getCampo("VLRBAIXA") != null ? new BigDecimal(registro.getCampo("VLRBAIXA").toString()) : BigDecimal.ZERO);
+
+		if (registro.getCampo("CODTIPTIT").toString().equals("15")) {
+			valorBaixa = this.valorTotalTransacao;
+		}
+
 		String idUsuario = (registro.getCampo("CODUSUBAIXA") != null
 				? registro.getCampo("CODUSUBAIXA").toString() : registro.getCampo("CODUSU").toString());
 
@@ -321,7 +337,7 @@ public class FinanceiroAcao extends SnkIntegrationsApi implements AcaoRotinaJava
 
 				+ "\"dataBaixa\": " + dataBaixa + ","
 
-				+ "\"valorBaixa\": \"" + (registro.getCampo("VLRBAIXA") != null ? registro.getCampo("VLRBAIXA").toString(): "") + "\","
+				+ "\"valorBaixa\": \"" + valorBaixa + "\","
 
 				+ "\"valorDesdobramento\": \"" + this.valorTotalTransacao.toString() + "\","
 
@@ -371,7 +387,7 @@ public class FinanceiroAcao extends SnkIntegrationsApi implements AcaoRotinaJava
 					try {
 						jsonPromessa = this.gerarJsonPromessa(arg0, registro);
 					} catch (Exception e) {
-						throw new Exception("Falha ao gerar Cartão " + e.getMessage());
+						throw new Exception("Falha ao gerar promessa " + e.getMessage());
 					}
 				}
 
