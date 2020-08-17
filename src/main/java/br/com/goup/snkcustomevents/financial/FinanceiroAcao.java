@@ -241,31 +241,30 @@ public class FinanceiroAcao extends SnkIntegrationsApi implements AcaoRotinaJava
 
 	private String gerarJsonPromessa(ContextoAcao arg0, Registro registro) throws Exception {
 //
-//		QueryExecutor tzaPrm = arg0.getQuery();
-//
-//		StringBuffer consulta = new StringBuffer();
-//		consulta.append("    SELECT NUNOTA,");
-//		consulta.append("    		NUFINDESPADIANT,  ");
-//		consulta.append("    		NRODESPOSITO,  ");
-//		consulta.append("    		VALORDEPOSITO,  ");
-//		consulta.append("    		CODCTABCOINT  ");
-//		consulta.append("      FROM TZAPRM  ");
-//		consulta.append("     WHERE NUNOTA = " + registro.getCampo("NUNOTA").toString());
-//		consulta.append("     AND NRODESPOSITO = '" + registro.getCampo("BH_NRODEPOSITO").toString() + "'");
-//
-//		if (true) {
-//			throw new Exception(consulta.toString());
-//		}
-//
-//		tzaPrm.nativeSelect(consulta.toString());
-//		tzaPrm.next();
+		QueryExecutor tzaPrm = arg0.getQuery();
+
+		StringBuffer consulta = new StringBuffer();
+		consulta.append("    SELECT NUNOTA,");
+		consulta.append("    		NUFINDESPADIANT,  ");
+		consulta.append("    		NRODESPOSITO,  ");
+		consulta.append("    		VALORDEPOSITO,  ");
+		consulta.append("    		CODCTABCOINT  ");
+		consulta.append("      FROM TZAPRM  ");
+		consulta.append("     WHERE NUNOTA = " + registro.getCampo("NUNOTA").toString());
+		consulta.append("     AND NRODESPOSITO = '" + registro.getCampo("BH_NRODEPOSITO").toString() + "'");
+
+		tzaPrm.nativeSelect(consulta.toString());
+		String idAdiantamento = "0";
+		if (tzaPrm.next()) {
+			idAdiantamento = tzaPrm.getString("NUFINDESPADIANT");
+		}
 
 //		this.valorTotalTransacao = new BigDecimal(tzaPrm.getString("VALORDEPOSITO"));
-		this.valorTotalTransacao = new BigDecimal( registro.getCampo("BH_VLRDEPOSITO").toString());
+		this.valorTotalTransacao = new BigDecimal(registro.getCampo("BH_VLRDEPOSITO").toString());
 
 		String json = "\"promessaSankhya\": {"
 				+ "\"idNota\": " + registro.getCampo("NUNOTA").toString() + ","
-//				+ "\"idAdiantamento\": " + tzaPrm.getString("NUFINDESPADIANT") + ","
+				+ "\"idAdiantamento\": " + idAdiantamento + ","
 				+ "\"numeroDeposito\": \"" +  registro.getCampo("BH_NRODEPOSITO").toString() + "\", "
 //				+ "\"idContaBancaria\": " + tzaPrm.getString("CODCTABCOINT")
 				+ "\"idContaBancaria\": " + registro.getCampo("BH_CODCTABCOINTDEPOSITO").toString()
@@ -366,7 +365,7 @@ public class FinanceiroAcao extends SnkIntegrationsApi implements AcaoRotinaJava
 	public void doAction(ContextoAcao arg0) throws Exception {
 
 		 String json = "";
-
+		String mensagem = "";
 	        for (Registro registro: arg0.getLinhas()) {
 
 	        	this.valorTotalTransacao = BigDecimal.ZERO;
@@ -410,6 +409,7 @@ public class FinanceiroAcao extends SnkIntegrationsApi implements AcaoRotinaJava
 				}
 
 			 	if (!json.isEmpty()) {
+
 	 	            String url   = this.urlApi + "/v2/caixas/pagamentos";
 	 	            if (registro.getCampo("RECEBCARTAO") != null && registro.getCampo("RECEBCARTAO").toString().equalsIgnoreCase("S")) {
 						url   = this.urlApi + "/v2/caixas/cartoes";
@@ -425,11 +425,18 @@ public class FinanceiroAcao extends SnkIntegrationsApi implements AcaoRotinaJava
 //	 	            } catch (Exception e) {
 //	 	            	throw new Exception("Falha: " + e.getMessage() + "\n" + json);
 //					}
+//					if (true) {
+//						throw new Exception(json);
+//					}
 					this.enviarDadosV2("POST", url, json);
-	 	            String mensagem = "Solicitacao enviada com sucesso!";
-	 	            arg0.setMensagemRetorno(mensagem);
+	 	            mensagem = "Solicitacao enviada com sucesso!";
+
 	 	        }
-	        }       
+	        }
+
+	        if (!mensagem.equals("")) {
+				arg0.setMensagemRetorno(mensagem);
+	        }
 		
 	}
 

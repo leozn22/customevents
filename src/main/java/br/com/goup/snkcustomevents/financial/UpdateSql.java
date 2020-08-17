@@ -147,6 +147,30 @@ public class UpdateSql extends SnkIntegrationsApi implements EventoProgramavelJa
 			}
 		}
 
+		boolean ePromessa = (modifingFields.isModifing("BH_NRODEPOSITO")
+				&& modifingFields.getNewValue("BH_NRODEPOSITO") != null)
+				|| financialVO.getProperty("BH_NRODEPOSITO") != null;
+
+		String idTipoTitulo = (modifingFields.isModifing("CODTIPTIT")
+				? modifingFields.getNewValue("CODTIPTIT").toString()
+				: (modifingFields.isModifing("NUCOMPENS") && modifingFields.getNewValue("NUCOMPENS") != null
+				? "26"
+				: financialVO.asBigDecimal("CODTIPTIT").toString()));
+
+		String valorBaixa = (modifingFields.isModifing("VLRBAIXA")
+				? modifingFields.getNewValue("VLRBAIXA").toString()
+				: financialVO.asBigDecimal("VLRBAIXA").toString());
+
+		String valorDesdobramento = (modifingFields.isModifing("VLRDESDOB")
+				? modifingFields.getOldValue("VLRDESDOB").toString()
+				: financialVO.asBigDecimal("VLRDESDOB").toString());
+
+		if (ePromessa) {
+			idTipoTitulo 	   = "15";
+			valorBaixa   	   = financialVO.asBigDecimal("BH_VLRDEPOSITO").toString();
+			valorDesdobramento = financialVO.asBigDecimal("BH_VLRDEPOSITO").toString();
+		}
+
 		String json = "{"
 				+ "\"idFinanceiro\": " + financialVO.asBigDecimal("NUFIN").toString() + ","
 				+ "\"idEmpresa\": " + financialVO.asBigDecimal("CODEMP").toString() + ","
@@ -158,25 +182,26 @@ public class UpdateSql extends SnkIntegrationsApi implements EventoProgramavelJa
 				? modifingFields.getNewValue("CODUSUBAIXA").toString()
 				: financialVO.asBigDecimal("CODUSUBAIXA").toString()) + ","
 
-				+ "\"idTipoTitulo\": " + (modifingFields.isModifing("CODTIPTIT")
-				? modifingFields.getNewValue("CODTIPTIT").toString()
-				: (modifingFields.isModifing("NUCOMPENS") && modifingFields.getNewValue("NUCOMPENS") != null
-				? "26"
-				: financialVO.asBigDecimal("CODTIPTIT").toString())) + ","
+				+ "\"idTipoTitulo\": " + idTipoTitulo + ","
 
 				+ "\"dataBaixa\": \"" + dataBaixa + "\","
 
-				+ "\"valorBaixa\": \"" + (modifingFields.isModifing("VLRBAIXA")
-				? modifingFields.getNewValue("VLRBAIXA").toString()
-				: financialVO.asBigDecimal("VLRBAIXA").toString()) + "\","
+				+ "\"valorBaixa\": \"" + valorBaixa + "\","
 
-				+ "\"valorDesdobramento\": \"" + (modifingFields.isModifing("VLRDESDOB")
-				? modifingFields.getOldValue("VLRDESDOB").toString()
-				: financialVO.asBigDecimal("VLRDESDOB").toString()) + "\","
+				+ "\"valorDesdobramento\": \"" + valorDesdobramento + "\","
 
 				+ "\"recebimentoCartao\": \"" +  (financialVO.getProperty("RECEBCARTAO") != null ? financialVO.asString("RECEBCARTAO") : "") + "\" ,"
 				+ "\"dataPrazo\": \"" + dataPrazo + "\" "
 				+ "}";
+
+		if (ePromessa) {
+			json = "{" + "\"financeiroSankhya\": " + json + ",";
+			json = json + "\"promessaSankhya\": {"
+							+ "\"idNota\": " + financialVO.asBigDecimal("NUNOTA") + ","
+							+ "\"numeroDeposito\": \"" +  financialVO.asString("BH_NRODEPOSITO") + "\", "
+							+ "\"idContaBancaria\": " + financialVO.asBigDecimal("BH_CODCTABCOINTDEPOSITO").toString()
+							+ "} }";
+		}
 
 		return json;
 
@@ -205,6 +230,22 @@ public class UpdateSql extends SnkIntegrationsApi implements EventoProgramavelJa
 				? Integer.parseInt(modifingFields.getNewValue("CODCTABCOINT").toString())
 				: financialVO.asInt("CODCTABCOINT"));
 
+//		int idUsuario  = (modifingFields.isModifing("CODUSU")
+//				? Integer.parseInt(modifingFields.getNewValue("CODUSU").toString())
+//				: financialVO.asInt("CODUSU"));
+
+
+		boolean ePromessa = financialVO.asInt("CODTIPTIT") == 15 &&
+				(modifingFields.isModifing("DHBAIXA") && modifingFields.getNewValue("DHBAIXA") == null);
+//		boolean ePromessa = false;
+
+//		if (idUsuario == 202) {
+//			throw new Exception(this.urlApi + "\n" + " FINANCEIRO GABI \n baixa: " + modifingFields.isModifing("DHBAIXA")
+//					+ "\n Deposito : " + modifingFields.isModifing("BH_NRODEPOSITO") + " Numero: " + financialVO.asString("BH_NRODEPOSITO")
+//					+ "\n Titulo: " +  financialVO.asInt("CODTIPTIT") +  "\n Operacao: " + financialVO.asInt("CODTIPOPER"));
+////			ePromessa = modifingFields.isModifing("BH_NRODEPOSITO") || financialVO.getProperty("BH_NRODEPOSITO") != null;
+//		}
+
 		if(modifingFields.isModifing("DHBAIXA")
 				&& financialVO.asInt("RECDESP") == 1
 				&& (financialVO.asInt("CODTIPTIT") == 2
@@ -217,7 +258,7 @@ public class UpdateSql extends SnkIntegrationsApi implements EventoProgramavelJa
 					|| financialVO.asInt("CODTIPOPER") == 4104
 					|| financialVO.asInt("CODTIPOPER") == 3107
 				    || (financialVO.asInt("CODTIPOPER") == 3106
-							&& (idCaixa == 21 || idCaixa == 23))))
+							&& (idCaixa == 21 || idCaixa == 23 || ePromessa))))
 		{
 			if (modifingFields.getNewValue("DHBAIXA") != null) {
 //			PROCESSO V1
@@ -227,12 +268,17 @@ public class UpdateSql extends SnkIntegrationsApi implements EventoProgramavelJa
 
 //			PROCESSO V2
 				String json = this.gerarJsonV2(persistenceEvent);
-				
-//				if (true) {
-//					throw new Exception(json);
-//				}
 
 				String url = this.urlApi + "/v2/caixas/pagamentos";
+
+				if (ePromessa) {
+					url = this.urlApi +  "/v2/caixas/depositos";
+				}
+
+//				if (idUsuario == 202) {
+//					throw new Exception(this.urlApi + "\n" + json);
+//				}
+
 				this.enviarDadosV2("POST", url, json);
 			} else {
 				
@@ -240,9 +286,13 @@ public class UpdateSql extends SnkIntegrationsApi implements EventoProgramavelJa
 //					throw new Exception(financialVO.asBigDecimal("NUFIN").toString());
 //				}
 
+
+
 				String url   = this.urlApi + "/v2/caixas/pagamentos/" + financialVO.asBigDecimal("NUFIN").toString();
-				String token = IntegrationApi.getToken(this.urlApi + "/oauth/token?grant_type=client_credentials", "POST", "Basic c2Fua2h5YXc6U0Bua2h5QDJV");
-				IntegrationApi.sendHttp(url, "{\"idUsuario\":" + financialVO.asBigDecimal("CODUSU").toString() + "}", "DELETE", "Bearer " + token);
+//				String token = IntegrationApi.getToken(this.urlApi + "/oauth/token?grant_type=client_credentials", "POST", "Basic c2Fua2h5YXc6U0Bua2h5QDJV");
+//				IntegrationApi.sendHttp(url, "{\"idUsuario\":" + financialVO.asBigDecimal("CODUSU").toString() + "}", "DELETE", "Bearer " + token);
+
+				this.enviarDadosV2("DELETE", url, "{\"idUsuario\":" + financialVO.asBigDecimal("CODUSU").toString() + "}");
 			}
 		}
 
