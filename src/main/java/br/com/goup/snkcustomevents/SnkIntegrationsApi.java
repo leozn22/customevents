@@ -77,7 +77,7 @@ abstract public class SnkIntegrationsApi {
 	
 	// Todas as bases de produção
 	protected String getUrlProduction() {
-		this.urlApi = "http://api-odin.sa-east-1.elasticbeanstalk.com:8080";
+		this.urlApi = "https://api-odin.azurewebsites.net";
 		if(!this.exigeAutenticacao) {
 			this.urlApi+= "/api";
 		}
@@ -85,6 +85,6 @@ abstract public class SnkIntegrationsApi {
 	}
 
 	protected String getUrl(){
-		return "http://api-odin-hom.sa-east-1.elasticbeanstalk.com:8080";
+		return "https://api-odin.azurewebsites.net";
 	}
 }

@@ -171,7 +171,7 @@ public class SincronizacaoPromessa extends SnkIntegrationsApi implements EventoP
 				SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
 				dtPrazo.setTime(format.parse(dataPrazo));
 				format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-				dataPrazo = format.format(dtPrazo.getTime());
+				dataPrazo = "\""  + format.format(dtPrazo.getTime()) + "\"" ;
 			} catch (Exception e) {
 				throw new Exception("Falha na Data prazo");
 			}
@@ -205,7 +205,7 @@ public class SincronizacaoPromessa extends SnkIntegrationsApi implements EventoP
 				+ "\"valorBaixa\": \"" + valorPromessa.toString() + "\","
 				+ "\"recebimentoCartao\": \"N\" ,"
 				+ "\"dataBaixa\": \"" +  dataBaixa + "\", "
-				+ "\"dataPrazo\": \"" +  dataPrazo + "\" "
+				+ "\"dataPrazo\": " +  dataPrazo
 				+ "}";
 
 		return json;
@@ -481,6 +481,55 @@ public class SincronizacaoPromessa extends SnkIntegrationsApi implements EventoP
 				}
 			}
 		}
+
+		if (codigoUsuario == 202) {
+
+			if (!temSincronizacao && persistenceEvent.getModifingFields().isModifing("NUFINDESPADIANT")) {
+
+				if (true) {
+					throw new Exception("Tá só gerando crédito");
+				}
+
+				consulta.append(" SELECT ");
+				consulta.append(" 	NUFIN, ");
+				consulta.append(" 	CODEMP, ");
+				consulta.append(" 	'" + prmVO.getProperty("NUNOTA") + "' AS NUNOTA, ");
+				consulta.append(" 	NUMNOTA, ");
+				consulta.append(" 	CODPARC, ");
+				consulta.append(" 	3118 AS CODTIPOPER, ");
+				consulta.append(" 	CODTIPTIT, ");
+				consulta.append(" 	VLRDESDOB, ");
+				consulta.append(" 	VLRBAIXA, ");
+				consulta.append(" 	DHBAIXA, ");
+				consulta.append(" 	DTPRAZO, ");
+				consulta.append(" 	DTNEG, ");
+				consulta.append(" 	BH_NRODEPOSITO, ");
+				consulta.append(" 	BH_CODCTABCOINTDEPOSITO, ");
+				consulta.append(" 	NUCOMPENS ");
+				consulta.append(" FROM  ");
+				consulta.append(" 	TGFFIN  ");
+				consulta.append(" WHERE ");
+				consulta.append(" 	NUMNOTA = :NUMNOTA ");
+				consulta.append(" 	AND CODTIPTIT = 15) ");
+				sql.setNamedParameter("NUMNOTA", prmVO.getProperty("NUMNOTA"));
+				result = sql.executeQuery(consulta.toString());
+
+				if (result.next()) {
+					jsonFin = this.gerarJsonFinanceiro(result, codigoUsuario, prmVO.getProperty("DATADEPOSITO").toString(), prmVO.asBigDecimal("VALORDEPOSITO"));
+
+					url = this.urlApi + "/v2/caixas/depositos";
+					String jsonPromessa = this.gerarJsonPromessa(persistenceEvent);
+					json = "{\"financeiroSankhya\":" + jsonFin
+							+ ", "
+							+ jsonPromessa
+							+ "} ";
+
+					this.enviarDadosV2(metodo, url, json);
+					temSincronizacao = true;
+				}
+			}
+		}
+
 
 		return temSincronizacao;
 
