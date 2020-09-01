@@ -250,7 +250,7 @@ public class FinanceiroAcao extends SnkIntegrationsApi implements AcaoRotinaJava
 		consulta.append("    		VALORDEPOSITO,  ");
 		consulta.append("    		CODCTABCOINT  ");
 		consulta.append("      FROM TZAPRM  ");
-		consulta.append("     WHERE NUNOTA = " + registro.getCampo("NUNOTA").toString());
+		consulta.append("     WHERE NUMNOTA = " + registro.getCampo("NUMNOTA").toString());
 		consulta.append("     AND NRODESPOSITO = '" + registro.getCampo("BH_NRODEPOSITO").toString() + "'");
 
 		tzaPrm.nativeSelect(consulta.toString());
@@ -263,7 +263,7 @@ public class FinanceiroAcao extends SnkIntegrationsApi implements AcaoRotinaJava
 		this.valorTotalTransacao = new BigDecimal(registro.getCampo("BH_VLRDEPOSITO").toString());
 
 		String json = "\"promessaSankhya\": {"
-				+ "\"idNota\": " + registro.getCampo("NUNOTA").toString() + ","
+//				+ "\"idNota\": " + registro.getCampo("NUNOTA").toString() + ","
 				+ "\"idAdiantamento\": " + idAdiantamento + ","
 				+ "\"numeroDeposito\": \"" +  registro.getCampo("BH_NRODEPOSITO").toString() + "\", "
 //				+ "\"idContaBancaria\": " + tzaPrm.getString("CODCTABCOINT")
