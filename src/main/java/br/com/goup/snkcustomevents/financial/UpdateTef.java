@@ -52,7 +52,7 @@ public class UpdateTef extends SnkIntegrationsApi implements EventoProgramavelJa
 		}
 	}
 
-	private String gerarJsonCartao(PersistenceEvent persistenceEvent, BigDecimal idNota) throws Exception {
+	private String gerarJsonCartao(PersistenceEvent persistenceEvent, BigDecimal idNota, BigDecimal idAcerto) throws Exception {
 
 		DynamicVO tefVO    			 = (DynamicVO) persistenceEvent.getVo();
 		String comprovante 			 = tefVO.asString("COMPROVANTE");
@@ -200,7 +200,7 @@ public class UpdateTef extends SnkIntegrationsApi implements EventoProgramavelJa
 			creLog.set("TID", "0");
 			creLog.set("TAXAADM", tefVO.getProperty("VLRTAXA"));
 			creLog.set("NUBAN", idBandeira);
-			//creLog.set("NUCARTAO", "");
+			creLog.set("NUCOMPENS", idAcerto);
 			creLog.set("NUESTABELECIMENTO", numeroEstabelecimento);
 			creLog.set("DTPAGCARTAO", tefVO.getProperty("DTTRANSACAO"));
 			creLog.set("CODAUT", tefVO.getProperty("AUTORIZACAO").toString());
@@ -371,6 +371,7 @@ public class UpdateTef extends SnkIntegrationsApi implements EventoProgramavelJa
 			consulta.append(" 	CODPARC, ");
 			consulta.append(" 	CODTIPOPER, ");
 			consulta.append(" 	VLRDESDOB, ");
+			consulta.append(" 	NUCOMPENS, ");
 			consulta.append(" 	DTPRAZO ");
 			consulta.append(" FROM  ");
 			consulta.append(" 	TGFFIN  ");
@@ -392,7 +393,7 @@ public class UpdateTef extends SnkIntegrationsApi implements EventoProgramavelJa
 				}
 
 				try {
-					jsonCartao = this.gerarJsonCartao(persistenceEvent, result.getBigDecimal("NUNOTA"));
+					jsonCartao = this.gerarJsonCartao(persistenceEvent, result.getBigDecimal("NUNOTA"), result.getBigDecimal("NUCOMPENS"));
 				} catch (Exception e) {
 					throw new Exception("Falha ao gerar Cartão " + e.getMessage());
 				}

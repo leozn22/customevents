@@ -235,9 +235,9 @@ public class UpdateSql extends SnkIntegrationsApi implements EventoProgramavelJa
 //				: financialVO.asInt("CODUSU"));
 
 
-//		boolean ePromessa = financialVO.asInt("CODTIPTIT") == 15 &&
-//				(modifingFields.isModifing("DHBAIXA") && modifingFields.getNewValue("DHBAIXA") == null);
-		boolean ePromessa = false;
+		boolean ePromessa = financialVO.asInt("CODTIPTIT") == 15 &&
+				(modifingFields.isModifing("DHBAIXA") && modifingFields.getNewValue("DHBAIXA") == null);
+//		boolean ePromessa = false;
 
 //		if (idUsuario == 202) {
 //			throw new Exception(this.urlApi + "\n" + " FINANCEIRO GABI \n baixa: " + modifingFields.isModifing("DHBAIXA")
