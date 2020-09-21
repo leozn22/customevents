@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>br.com.goup.snkintegrations</groupId>
 	<artifactId>customevents</artifactId>
-	<version>1.0.28-SNAPSHOT</version>
+	<version>1.0.29-SNAPSHOT</version>
 	<packaging>jar</packaging>
 	<name>Sankhya Custom Events Programmer</name>
 	<description>General events that are used into data dictionary to customize business processs</description>

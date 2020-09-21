@@ -52,6 +52,7 @@ public class FinanceiroAcao extends SnkIntegrationsApi implements AcaoRotinaJava
 		String json 	   			 = "";
 		String numeroEstabelecimento = "";
 		String tipoNegociacao 		 = "";
+		boolean parcelado 		 	 = false;
 
 		JSONObject jsonObjectCr        = new JSONObject(comprovante);
 		JSONArray cupomEstabelecimento = jsonObjectCr.getJSONArray("cupomEstabelecimento");
@@ -71,6 +72,10 @@ public class FinanceiroAcao extends SnkIntegrationsApi implements AcaoRotinaJava
 //			TIPO NEGOCIAÇÃO
 			if (valor.contains("VENDA")) {
 				tipoNegociacao = valor.trim();
+			}
+
+			if (valor.contains("PARCELADO LOJA EM")) {
+				parcelado = true;
 			}
 
 //			VALOR TOTAL DA VENDA
@@ -93,7 +98,7 @@ public class FinanceiroAcao extends SnkIntegrationsApi implements AcaoRotinaJava
 
 		String tipoVenda = "D";
 		this.isCredito   = !tipoNegociacao.contains("DEBITO");
-		if (tipoNegociacao.contains("PARC.LOJA")) {
+		if (tipoNegociacao.contains("PARC.LOJA") || parcelado) {
 			tipoVenda = "P";
 		} else if (tipoNegociacao.contains("CREDITO")) {
 			tipoVenda = "C";
@@ -114,7 +119,7 @@ public class FinanceiroAcao extends SnkIntegrationsApi implements AcaoRotinaJava
 		String descrProd      = null;
 
 		QueryExecutor adTccCab = arg0.getQuery();
-		adTccCab.nativeSelect(" SELECT  NUPRO, NUBAN, DESCRPROD FROM AD_TCCPRO WHERE DESCRPROD LIKE '%" + bandeira
+		adTccCab.nativeSelect(" SELECT  NUPRO, NUBAN, DESCRPROD FROM AD_TCCPRO WHERE DESCRPRODLOJA LIKE '%" + bandeira
 				+ "%' AND TIPOVENDA = '" + tipoVenda +  "'");
 
 		if (adTccCab.next()) {
@@ -128,7 +133,7 @@ public class FinanceiroAcao extends SnkIntegrationsApi implements AcaoRotinaJava
 			String[] valores = bandeira.split(" ");
 			String valor = valores[0].trim();
 
-			adTccCab.nativeSelect(" SELECT  NUPRO, NUBAN, DESCRPROD FROM AD_TCCPRO WHERE DESCRPROD LIKE '%" + valor
+			adTccCab.nativeSelect(" SELECT  NUPRO, NUBAN, DESCRPROD FROM AD_TCCPRO WHERE DESCRPRODLOJA LIKE '%" + valor
 					+ "%' AND TIPOVENDA = '" + tipoVenda+  "'");
 			if (adTccCab.next()) {
 				idProduto  = adTccCab.getBigDecimal("NUPRO");
@@ -138,7 +143,9 @@ public class FinanceiroAcao extends SnkIntegrationsApi implements AcaoRotinaJava
 			adTccCab.close();
 		}
 
-		adTccCab.nativeSelect("SELECT NUCTRL FROM AD_TCCCAB WHERE NUNOTA = " + registro.getCampo("NUNOTA"));
+		adTccCab.nativeSelect("SELECT NUCTRL FROM AD_TCCCAB WHERE NUNOTA = " + registro.getCampo("NUNOTA")
+				+ " AND NSU = '" + tgfTef.getString("NUMNSU") + "'"
+				+ " AND CODAUT = '" + tgfTef.getString("AUTORIZACAO") + "'");
 		boolean isAdTccCab = adTccCab.next();
 
 		tgfTef.nativeSelect(consulta.toString());
@@ -157,7 +164,8 @@ public class FinanceiroAcao extends SnkIntegrationsApi implements AcaoRotinaJava
 			creCartao.set("DTPAGCARTAO", tgfTef.getTimestamp("DTTRANSACAO"));
 			creCartao.set("CODAUT", tgfTef.getString("AUTORIZACAO"));
 			creCartao.set("NUNOTA", registro.getCampo("NUNOTA"));
-			creCartao.set("VLRTRANSACAO", tgfTef.getBigDecimal("VLRTRANSACAO"));
+//			creCartao.set("VLRTRANSACAO", tgfTef.getBigDecimal("VLRTRANSACAO"));
+			creCartao.set("VLRTRANSACAO", this.valorTotalTransacao);
 			creCartao.set("NSU", tgfTef.getString("NUMNSU"));
 			creCartao.save();
 		}

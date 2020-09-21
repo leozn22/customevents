@@ -60,6 +60,7 @@ public class UpdateTef extends SnkIntegrationsApi implements EventoProgramavelJa
 		String json 	   			 = "";
 		String numeroEstabelecimento = "";
 		String tipoNegociacao 		 = "";
+		boolean parcelado 		 	 = false;
 
 		JSONObject jsonObjectCr        = new JSONObject(comprovante);
 		JSONArray cupomEstabelecimento = jsonObjectCr.getJSONArray("cupomEstabelecimento");
@@ -81,6 +82,10 @@ public class UpdateTef extends SnkIntegrationsApi implements EventoProgramavelJa
 //			TIPO NEGOCIAÇÃO
 			if (valor.contains("VENDA")) {
 				tipoNegociacao = valor.trim();
+			}
+
+			if (valor.contains("PARCELADO LOJA EM")) {
+				parcelado = true;
 			}
 
 //			VALOR TOTAL DA VENDA
@@ -140,7 +145,7 @@ public class UpdateTef extends SnkIntegrationsApi implements EventoProgramavelJa
 
 		String tipoVenda = "D";
 		this.isCredito   = !tipoNegociacao.contains("DEBITO");
-		if (tipoNegociacao.contains("PARC.LOJA")) {
+		if (tipoNegociacao.contains("PARC.LOJA") || parcelado) {
 			tipoVenda = "P";
 		} else if (tipoNegociacao.contains("CREDITO")) {
 			tipoVenda = "C";
@@ -159,7 +164,7 @@ public class UpdateTef extends SnkIntegrationsApi implements EventoProgramavelJa
 
 		JdbcWrapper jdbc = persistenceEvent.getJdbcWrapper();
 		NativeSql sql = new NativeSql(jdbc);
-		sql.appendSql(" SELECT  NUPRO, NUBAN, DESCRPROD FROM AD_TCCPRO WHERE DESCRPROD LIKE '%" + bandeira
+		sql.appendSql(" SELECT  NUPRO, NUBAN, DESCRPROD FROM AD_TCCPRO WHERE DESCRPRODLOJA LIKE '%" + bandeira
 				+ "%' AND TIPOVENDA = '" + tipoVenda+  "'");
 
 		BigDecimal idProduto  = null;
@@ -178,7 +183,7 @@ public class UpdateTef extends SnkIntegrationsApi implements EventoProgramavelJa
 			String[] valores = bandeira.split(" ");
 			String valor = valores[0].trim();
 
-			r1 = sql.executeQuery(" SELECT  NUPRO, NUBAN, DESCRPROD FROM AD_TCCPRO WHERE DESCRPROD LIKE '%" + valor
+			r1 = sql.executeQuery(" SELECT  NUPRO, NUBAN, DESCRPROD FROM AD_TCCPRO WHERE DESCRPRODLOJA LIKE '%" + valor
 					+ "%' AND TIPOVENDA = '" + tipoVenda+  "'");
 			if (r1.next()) {
 				idProduto = r1.getBigDecimal("NUPRO");
@@ -188,7 +193,9 @@ public class UpdateTef extends SnkIntegrationsApi implements EventoProgramavelJa
 			r1.getStatement().close();
 		}
 		
-		r1 = sql.executeQuery("SELECT NUCTRL FROM AD_TCCCAB WHERE NUNOTA = " + idNota);
+		r1 = sql.executeQuery("SELECT NUCTRL FROM AD_TCCCAB WHERE NUNOTA = "
+				+ idNota + " AND NSU = '" + tefVO.getProperty("NUMNSU").toString() + "'"
+				+ " AND CODAUT = '" + tefVO.getProperty("AUTORIZACAO").toString() + "'");
 				
 		if (!r1.next()) {
 			JapeWrapper logDAO   = JapeFactory.dao("AD_TCCCAB");
@@ -205,7 +212,8 @@ public class UpdateTef extends SnkIntegrationsApi implements EventoProgramavelJa
 			creLog.set("DTPAGCARTAO", tefVO.getProperty("DTTRANSACAO"));
 			creLog.set("CODAUT", tefVO.getProperty("AUTORIZACAO").toString());
 			creLog.set("NUNOTA", idNota);
-			creLog.set("VLRTRANSACAO", new BigDecimal(tefVO.getProperty("VLRTRANSACAO").toString()));
+//			creLog.set("VLRTRANSACAO", new BigDecimal(tefVO.getProperty("VLRTRANSACAO").toString()));
+			creLog.set("VLRTRANSACAO", this.valorTotalTransacao);
 			creLog.set("NSU", tefVO.getProperty("NUMNSU").toString());
 			creLog.save();
 		}
@@ -328,9 +336,9 @@ public class UpdateTef extends SnkIntegrationsApi implements EventoProgramavelJa
 	private void enviarDados(String json) throws Exception {
 
 		this.qtdException++;
-		String url = this.urlApi + "/v2/caixas/cartoes";
-		String token = IntegrationApi.getToken(this.urlApi + "/oauth/token?grant_type=client_credentials", "POST", "Basic c2Fua2h5YXc6U0Bua2h5QDJV");
 		try {
+			String url = this.urlApi + "/v2/caixas/cartoes";
+			String token = IntegrationApi.getToken(this.urlApi + "/oauth/token?grant_type=client_credentials", "POST", "Basic c2Fua2h5YXc6U0Bua2h5QDJV");
 			IntegrationApi.sendHttp(url, json, "POST", "Bearer " + token);
 		} catch (Exception e) {
 			if (this.qtdException < 2) {

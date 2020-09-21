@@ -209,14 +209,15 @@ public class UpdateSql extends SnkIntegrationsApi implements EventoProgramavelJa
 
 	private void enviarDadosV2(String verboHttp, String url, String json) throws Exception {
 		this.qtdException++;
-		String token = IntegrationApi.getToken(this.urlApi + "/oauth/token?grant_type=client_credentials", "POST", "Basic c2Fua2h5YXc6U0Bua2h5QDJV");
 		try {
+			String token = IntegrationApi.getToken(this.urlApi + "/oauth/token?grant_type=client_credentials", "POST", "Basic c2Fua2h5YXc6U0Bua2h5QDJV");
 			IntegrationApi.sendHttp(url, json, verboHttp, "Bearer " + token);
 		} catch (Exception e) {
-			if (this.qtdException < 2) {
+			if (this.qtdException < 3) {
 				enviarDadosV2(verboHttp, url, json);
+			} else {
+				throw new Exception("Falha: " + e.getMessage() + "\n" + json);
 			}
-//			throw new Exception("Falha: " + e.getMessage() + "\n" + json);
 		}
 		this.qtdException = 0;
 	}
