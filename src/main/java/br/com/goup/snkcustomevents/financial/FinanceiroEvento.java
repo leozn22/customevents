@@ -7,6 +7,7 @@ import br.com.sankhya.jape.event.ModifingFields;
 import br.com.sankhya.jape.event.PersistenceEvent;
 import br.com.sankhya.jape.event.TransactionContext;
 import br.com.sankhya.jape.vo.DynamicVO;
+import br.com.sankhya.modelcore.auth.AuthenticationInfo;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -161,7 +162,9 @@ public class FinanceiroEvento extends SnkIntegrationsApi implements EventoProgra
                 : financeiroVo.asInt("CODCTABCOINT"));
 
         boolean ePagamentoCaixa = financeiroVo.asInt("CODTIPOPER") == 3106
-                && (idCaixa == 21 || idCaixa == 23);
+                && (AuthenticationInfo.getCurrent().getUserID().intValue() == 181
+                    || AuthenticationInfo.getCurrent().getUserID().intValue() == 305);
+//                && (idCaixa == 21 || idCaixa == 23);
 
         return  (financeiroVo.asInt("RECDESP") == 1 && (eTipoTituloValido(financeiroVo.asInt("CODTIPTIT"))
                 && eTipoOperacaoValida(financeiroVo.asInt("CODTIPOPER"))) || ePagamentoCaixa);
