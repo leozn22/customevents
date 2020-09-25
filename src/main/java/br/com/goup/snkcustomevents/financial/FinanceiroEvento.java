@@ -166,9 +166,15 @@ public class FinanceiroEvento extends SnkIntegrationsApi implements EventoProgra
                     || AuthenticationInfo.getCurrent().getUserID().intValue() == 305);
 //                && (idCaixa == 21 || idCaixa == 23);
 
-        return  (financeiroVo.asInt("RECDESP") == 1 && (eTipoTituloValido(financeiroVo.asInt("CODTIPTIT"))
-                && eTipoOperacaoValida(financeiroVo.asInt("CODTIPOPER"))) || ePagamentoCaixa);
+        boolean eCompensacao = modifingFields.isModifing("NUCOMPENS")
+                && modifingFields.getNewValue("NUCOMPENS") != null;
 
+        if (eCompensacao && financeiroVo.asString("ORIGEM").equals("F")) {
+            return false;
+        }
+
+        return (financeiroVo.asInt("RECDESP") == 1 && (eTipoTituloValido(financeiroVo.asInt("CODTIPTIT"))
+                && eTipoOperacaoValida(financeiroVo.asInt("CODTIPOPER"))) || ePagamentoCaixa);
     }
 
     private String gerarJsonV2(PersistenceEvent persistenceEvent) throws Exception {
