@@ -97,7 +97,16 @@ public class FinanceiroEvento extends SnkIntegrationsApi implements EventoProgra
 
     @Override
     public void beforeUpdate(PersistenceEvent persistenceEvent) throws Exception {
+    	DynamicVO financeiroVo = (DynamicVO) persistenceEvent.getVo();
+    	ModifingFields modifingFields = persistenceEvent.getModifingFields();
 
+    	if(modifingFields.isModifing("DHBAIXA")
+    		&& modifingFields.getNewValue("DHBAIXA") != null
+    		&& modifingFields.getNewValue("DHBAIXA").toString() != "") {
+	    	if(financeiroVo.asInt("CODTIPTIT")==26 && financeiroVo.asInt("CODTIPOPER")==3118) {
+	    		throw new Exception("Compra de crédito não pode ser paga com crédito!");
+	    	}
+    	}
     }
 
     @Override
@@ -107,7 +116,7 @@ public class FinanceiroEvento extends SnkIntegrationsApi implements EventoProgra
 
     @Override
     public void afterInsert(PersistenceEvent persistenceEvent) throws Exception {
-
+    	
     }
 
     @Override
@@ -150,6 +159,7 @@ public class FinanceiroEvento extends SnkIntegrationsApi implements EventoProgra
                 || idTipoOperacao == 4401
                 || idTipoOperacao == 4104
                 || idTipoOperacao == 3107;
+                //|| idTipoOperacao == 3106;
     }
 
     private boolean eIntegracao(PersistenceEvent persistenceEvent) {
