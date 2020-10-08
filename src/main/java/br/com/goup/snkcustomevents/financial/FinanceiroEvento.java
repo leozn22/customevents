@@ -183,6 +183,11 @@ public class FinanceiroEvento extends SnkIntegrationsApi implements EventoProgra
             return false;
         }
 
+        if (financeiroVo.asInt("CODTIPOPER") == 4104
+                && AuthenticationInfo.getCurrent().getUserID().intValue() == 26) {
+            return false;
+        }
+
         return (financeiroVo.asInt("RECDESP") == 1 && (eTipoTituloValido(financeiroVo.asInt("CODTIPTIT"))
                 && eTipoOperacaoValida(financeiroVo.asInt("CODTIPOPER"))) || ePagamentoCaixa);
     }

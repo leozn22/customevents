@@ -317,7 +317,9 @@ public class FinanceiroAcao extends SnkIntegrationsApi implements AcaoRotinaJava
 
 		BigDecimal valorBaixa = (registro.getCampo("VLRBAIXA") != null ? new BigDecimal(registro.getCampo("VLRBAIXA").toString()) : BigDecimal.ZERO);
 
-		if (registro.getCampo("CODTIPTIT").toString().equals("15")) {
+		if (registro.getCampo("CODTIPTIT").toString().equals("15")
+				|| (registro.getCampo("RECEBCARTAO") != null
+					&& registro.getCampo("RECEBCARTAO").toString().equals("S"))) {
 			valorBaixa = this.valorTotalTransacao;
 		}
 
