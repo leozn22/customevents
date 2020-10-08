@@ -326,6 +326,10 @@ public class SincronizacaoPromessa extends SnkIntegrationsApi implements EventoP
 
 		consulta.append(" SELECT ");
 		consulta.append(" 	SUM(COALESCE(ITE.VLRTOT, 0)) AS VALOR, ");
+		consulta.append("   SUM(CASE COALESCE(ITE.TZASTATUS, 'AP') ");
+		consulta.append("		WHEN 'CA' THEN COALESCE(ITE.VLRTOT,0)");
+		consulta.append("		ELSE 0 ");
+		consulta.append("		END) AS VALOR_ITENS_CANCELADOS,");
 		consulta.append(" 	COUNT(ITE.SEQUENCIA) AS QTDE_ITENS, ");
 		consulta.append(" 	SUM(CASE COALESCE(ITE.TZASTATUS, 'AP') ");
 		consulta.append(" 			WHEN 'CA' THEN 1 ");
@@ -344,9 +348,10 @@ public class SincronizacaoPromessa extends SnkIntegrationsApi implements EventoP
 		if (result.next()) {
 			if (result.getBigDecimal("QTDE_ITENS").intValue() == result.getBigDecimal("QTDE_CANCELADOS").intValue()) {
 				valorCredito = result.getBigDecimal("VALOR");
+			}else if(result.getBigDecimal("QTDE_CANCELADOS").intValue() > 0 && result.getBigDecimal("VALOR_ITENS_CANCELADOS").compareTo(BigDecimal.ZERO) > 0) {
+				valorCredito = result.getBigDecimal("VALOR_ITENS_CANCELADOS");
 			}
 		}
-
 		return valorCredito;
 	}
 
