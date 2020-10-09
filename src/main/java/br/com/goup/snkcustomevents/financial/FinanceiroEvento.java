@@ -102,8 +102,8 @@ public class FinanceiroEvento extends SnkIntegrationsApi implements EventoProgra
 
     	if(modifingFields.isModifing("DHBAIXA")
     		&& modifingFields.getNewValue("DHBAIXA") != null
-    		&& modifingFields.getNewValue("DHBAIXA").toString().equals("")) {
-	    	if(financeiroVo.asInt("CODTIPTIT")==26 && financeiroVo.asInt("CODTIPOPER")==3118) {
+    		&& !modifingFields.getNewValue("DHBAIXA").toString().equals("")) {
+	    	if(financeiroVo.asInt("CODTIPTIT")== 26 && financeiroVo.asInt("CODTIPOPER")==3118) {
 	    		throw new Exception("Compra de crédito não pode ser paga com crédito!");
 	    	}
     	}
