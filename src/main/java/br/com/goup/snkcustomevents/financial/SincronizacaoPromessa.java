@@ -738,6 +738,104 @@ public class SincronizacaoPromessa extends SnkIntegrationsApi implements EventoP
 		}
 	}
 	
+	private void verificacoesBaixaPromessa(PersistenceEvent persistenceEvent) throws Exception {
+		ModifingFields modifingFields = persistenceEvent.getModifingFields();
+		DynamicVO prmVO =  (DynamicVO) persistenceEvent.getVo();
+		
+		if(modifingFields.isModifing("STATUSPROMESSA")
+		&& modifingFields.getNewValue("STATUSPROMESSA") != null
+		&& modifingFields.getNewValue("STATUSPROMESSA").toString().equals("CO")) {
+			JdbcWrapper jdbc 	   = persistenceEvent.getJdbcWrapper();
+			NativeSql sql		   = new NativeSql(jdbc);
+			Integer nunota 	 	   = prmVO.asBigDecimal("NUNOTA").intValue();
+			String  nroDeposito    = prmVO.asString("NRODESPOSITO");
+			BigDecimal vlrDeposito = prmVO.asBigDecimal("VALORDEPOSITO");
+			
+			BigDecimal valorCredito = this.gerarValorCredito(sql, nunota);
+			
+			if(valorCredito.compareTo(BigDecimal.ZERO) > 0) {
+				
+				Integer codigoEmpresa = 0;
+				StringBuffer consultaCab = new StringBuffer();
+				consultaCab.append("SELECT CODEMP FROM TGFCAB WHERE NUNOTA=:NUNOTA");
+				sql.setNamedParameter("NUNOTA", nunota);
+				ResultSet result = sql.executeQuery(consultaCab.toString());
+				
+				if(result.next()) {
+					codigoEmpresa = result.getInt("CODEMP");
+				}
+				
+				if(codigoEmpresa <= 0) {
+					throw new Exception("Empresa não identificada ao tentar gerar o crédito!");
+				}
+				
+				//Verifica se o crédito ja foi gerado
+				StringBuffer consulta = new StringBuffer();
+				consulta.append(" SELECT NUFIN FROM TGFFIN WHERE RECDESP =-1 AND CODTIPTIT = 26 ");
+				consulta.append(" AND CODTIPOPER = 4106 ");
+				consulta.append(" AND NUMNOTA = " + prmVO.asBigDecimal("NUMNOTA").intValue());
+				consulta.append(" AND CODEMP = "+codigoEmpresa);
+
+				ResultSet fin = sql.executeQuery(consulta.toString());
+				if (!fin.next()) {
+						DynamicVO finDespVo = this.gerarFinCredito(prmVO.asBigDecimal("CODPARCFILTRO"),new BigDecimal(codigoEmpresa.toString()),prmVO.asBigDecimal("NUMNOTA"), valorCredito, nroDeposito,vlrDeposito);
+						String nufinAdiant = finDespVo.getPrimaryKey().toString().replaceAll("\\D", "");
+						prmVO.setProperty("NUADIANTAMENTO", nufinAdiant);
+						prmVO.setProperty("NUFINDESPADIANT", nufinAdiant);
+						
+						//Envia o crédito para o zapsis
+						//String json = "{"
+				        //        + "\"idFinanceiro\": " + nufinAdiant + ","
+				        //        + "\"idEmpresa\": " + codigoEmpresa + ","
+				        //        + "\"idNota\": " + nunota + ","
+				        //        + "\"numeroNota\": " + prmVO.asBigDecimal("NUNOTA").toString() + ","
+				        //        + "\"idParceiro\": " + prmVO.asBigDecimal("CODPARCFILTRO").toString() + ","
+				        //        + "\"idTipoOperacao\": 4401,"
+				        //        + "\"idUsuarioBaixa\": " +  prmVO.asBigDecimal("AD_CODUSU").toString() + ","
+				        //        + "\"idTipoTitulo\": " + "15" + ","
+				        //        + "\"valorDesdobramento\": \"" + valorCredito + "\","
+				        //        + "\"dataPrazo\": \"" + TimeUtils.getNow() + "\" "
+				        //        + "}";
+						//String url = this.urlApi + "/v2/caixas/pagamentos";
+				        //this.enviarDadosV2("POST", url, json);
+				}
+			}
+		}
+	}
+
+	private DynamicVO gerarFinCredito(BigDecimal codparc,BigDecimal codEmp,BigDecimal numnota, BigDecimal valorCredito, String numeroDeposito,BigDecimal valorDeposito) throws Exception {
+	
+		Calendar dataVencimento  = Calendar.getInstance();
+		dataVencimento.add(Calendar.YEAR, 1);
+		JapeWrapper finDAO = JapeFactory.dao("Financeiro");
+		FluidCreateVO tgffinCre = finDAO.create();
+		tgffinCre.set("CODPARC", codparc);
+		tgffinCre.set("DESDOBRAMENTO", "0");
+		tgffinCre.set("CODTIPOPER", new BigDecimal("4106"));
+		tgffinCre.set("RECDESP", new BigDecimal("-1"));
+		tgffinCre.set("ORIGEM", "F");
+		tgffinCre.set("CODEMP", codEmp);
+		tgffinCre.set("NUMNOTA", numnota);
+		tgffinCre.set("DTNEG", TimeUtils.buildData(dataVencimento.get(Calendar.DAY_OF_MONTH),
+				dataVencimento.get(Calendar.MONTH),
+				dataVencimento.get(Calendar.YEAR)));
+		tgffinCre.set("VLRDESDOB", valorCredito);
+		tgffinCre.set("DTVENC", TimeUtils.buildData(dataVencimento.get(Calendar.DAY_OF_MONTH),
+													dataVencimento.get(Calendar.MONTH),
+													dataVencimento.get(Calendar.YEAR)));
+		tgffinCre.set("CODNAT", new BigDecimal("4040100"));
+		tgffinCre.set("CODTIPTIT", new BigDecimal("26"));
+		tgffinCre.set("PRAZO", new BigDecimal("0"));
+		tgffinCre.set("CODBCO", new BigDecimal("0"));
+		tgffinCre.set("BH_NRODEPOSITO", numeroDeposito);
+		tgffinCre.set("BH_VLRDEPOSITO",valorDeposito);
+		tgffinCre.set("HISTORICO", "CRÉDITO GERADO PELA CONFIRMAÇÃO DE PROMESSA");
+		tgffinCre.set("CODUSU", AuthenticationInfo.getCurrent().getUserID());
+		tgffinCre.set("DHMOV", TimeUtils.getNow());
+	
+		return tgffinCre.save();
+	}
+	
 	@Override
 	public void afterDelete(PersistenceEvent arg0) throws Exception {
 		// TODO Auto-generated method stub
@@ -753,23 +851,25 @@ public class SincronizacaoPromessa extends SnkIntegrationsApi implements EventoP
 	public void afterUpdate(PersistenceEvent arg0) throws Exception {
 		try {
 //			DynamicVO dynVO = (DynamicVO) arg0.getVo();
-			ModifingFields modifingFields = arg0.getModifingFields();
+			//ModifingFields modifingFields = arg0.getModifingFields();
 //			BigDecimal valorDeposito = dynVO.asBigDecimal("VALORDEPOSITO");
 //			if (!(dynVO.asString("STATUSPEDIDO").equals("LI") && dynVO.asString("STATUSPROMESSA").equals("PE")
 //					&& valorDeposito != null
 //					&& valorDeposito.compareTo(BigDecimal.ZERO) == 0)) {
 
 
-			if ((modifingFields.isModifing("STATUSPROMESSA")
-				&& modifingFields.getNewValue("STATUSPROMESSA") != null
-				&& !modifingFields.getNewValue("STATUSPROMESSA").toString().equals("PE"))
-					|| (modifingFields.isModifing("NUACERTO")
-						&& modifingFields.getNewValue("NUACERTO") != null)) {
-				enviarDados(arg0);
-			} else if (modifingFields.isModifing("NUFINDESPADIANT")
-					&& modifingFields.getNewValue("NUFINDESPADIANT") != null) {
-				baixarPromessa(arg0);
-			}
+			//if ((modifingFields.isModifing("STATUSPROMESSA")
+			//	&& modifingFields.getNewValue("STATUSPROMESSA") != null
+			//	&& !modifingFields.getNewValue("STATUSPROMESSA").toString().equals("PE"))
+			//		|| (modifingFields.isModifing("NUACERTO")
+			//			&& modifingFields.getNewValue("NUACERTO") != null)) {
+			//	enviarDados(arg0);
+			//} else if (modifingFields.isModifing("NUFINDESPADIANT")
+			//		&& modifingFields.getNewValue("NUFINDESPADIANT") != null) {
+			//	baixarPromessa(arg0);
+			//}
+			
+			this.verificacoesBaixaPromessa(arg0);
 
 		} catch (Exception e) {
 			throw new Exception("Falha Geral\n" + e.getMessage());

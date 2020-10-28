@@ -12,6 +12,8 @@ import br.com.sankhya.modelcore.auth.AuthenticationInfo;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
+import com.sankhya.util.TimeUtils;
+
 public class FinanceiroEvento extends SnkIntegrationsApi implements EventoProgramavelJava  {
 
     private int qtdException = 0;
@@ -23,16 +25,16 @@ public class FinanceiroEvento extends SnkIntegrationsApi implements EventoProgra
 
     @Override
     public void afterUpdate(PersistenceEvent persistenceEvent) throws Exception {
-
+    	//DynamicVO financeiroVO = (DynamicVO) persistenceEvent.getVo();
         ModifingFields modifingFields = persistenceEvent.getModifingFields();
-        if(modifingFields.isModifing("DHBAIXA")) {
-            if (modifingFields.getNewValue("DHBAIXA") != null) {
+        if(modifingFields.isModifing("DHBAIXA")) {//modifingFields.isModifing("BH_NRODEPOSITO")
+            if (modifingFields.getNewValue("DHBAIXA") != null) {// && financeiroVO.asInt("CODTIPTIT") != 15) || (financeiroVO.getProperty("DHBAIXA") != null && financeiroVO.asInt("CODTIPTIT") == 15)) {
                 this.enviarFinanceiro(persistenceEvent);
             } else {
                 this.estornoFinanceiro(persistenceEvent);
             }
         }
-
+        this.enviarCreditoPromessa(persistenceEvent);
         this.enviarCredito(persistenceEvent);
     }
 
@@ -92,21 +94,21 @@ public class FinanceiroEvento extends SnkIntegrationsApi implements EventoProgra
 
     @Override
     public void beforeInsert(PersistenceEvent persistenceEvent) throws Exception {
-
+    	DynamicVO financeiroVO = (DynamicVO) persistenceEvent.getVo();
+    	if(financeiroVO.asBigDecimal("CODTIPOPER").intValue() == 4106
+    	   && financeiroVO.getProperty("BH_VLRDEPOSITO") != null
+    	   && financeiroVO.getProperty("BH_NRODEPOSITO") != null) {
+    		financeiroVO.setProperty("DTPRAZO", TimeUtils.getNow());
+    		
+    	   String json = this.gerarJsonDespesa(persistenceEvent);
+    	   String url  = this.urlApi + "/v2/caixas/pagamentos";
+    	   this.enviarDados("POST", url, json);
+    	 }
     }
 
     @Override
     public void beforeUpdate(PersistenceEvent persistenceEvent) throws Exception {
-    	DynamicVO financeiroVo = (DynamicVO) persistenceEvent.getVo();
-    	ModifingFields modifingFields = persistenceEvent.getModifingFields();
-
-    	if(modifingFields.isModifing("DHBAIXA")
-    		&& modifingFields.getNewValue("DHBAIXA") != null
-    		&& !modifingFields.getNewValue("DHBAIXA").toString().equals("")) {
-	    	if(financeiroVo.asInt("CODTIPTIT")== 26 && financeiroVo.asInt("CODTIPOPER")==3118) {
-	    		throw new Exception("Compra de crédito não pode ser paga com crédito!");
-	    	}
-    	}
+    	this.validarOperacaoFinanceira(persistenceEvent);
     }
 
     @Override
@@ -116,17 +118,17 @@ public class FinanceiroEvento extends SnkIntegrationsApi implements EventoProgra
 
     @Override
     public void afterInsert(PersistenceEvent persistenceEvent) throws Exception {
-    	
+
     }
 
     @Override
     public void afterDelete(PersistenceEvent persistenceEvent) throws Exception {
-
+    	
     }
 
     @Override
     public void beforeCommit(TransactionContext transactionContext) throws Exception {
-
+    	
     }
 
     private void enviarDados(String verboHttp, String url, String json) throws Exception {
@@ -158,8 +160,8 @@ public class FinanceiroEvento extends SnkIntegrationsApi implements EventoProgra
         return  idTipoOperacao == 3117
                 || idTipoOperacao == 4401
                 || idTipoOperacao == 4104
-                || idTipoOperacao == 3107;
-                //|| idTipoOperacao == 3106;
+                || idTipoOperacao == 3107
+                || idTipoOperacao == 3106;
     }
 
     private boolean eIntegracao(PersistenceEvent persistenceEvent) {
@@ -293,7 +295,8 @@ public class FinanceiroEvento extends SnkIntegrationsApi implements EventoProgra
 
         DynamicVO financialVO 		  = (DynamicVO) persistenceEvent.getVo();
 
-        String dataPrazo = financialVO.getProperty("DTPRAZO").toString();
+        String dataPrazo = financialVO.getProperty("DTPRAZO") != null ? financialVO.getProperty("DTPRAZO").toString() : null;
+        String idFinanceiro = financialVO.getProperty("NUFIN") != null ? financialVO.asBigDecimal("NUFIN").toString() : null;
 
         Calendar dtPrazo = null;
         if (dataPrazo != null) {
@@ -309,12 +312,12 @@ public class FinanceiroEvento extends SnkIntegrationsApi implements EventoProgra
         }
 
         String json = "{"
-                + "\"idFinanceiro\": " + financialVO.asBigDecimal("NUFIN").toString() + ","
+                + "\"idFinanceiro\": " + idFinanceiro + ","
                 + "\"idEmpresa\": " + financialVO.asBigDecimal("CODEMP").toString() + ","
                 + "\"idNota\": " + financialVO.asBigDecimal("NUNOTA") + ","
                 + "\"numeroNota\": " + financialVO.asBigDecimal("NUMNOTA").toString() + ","
                 + "\"idParceiro\": " + financialVO.asBigDecimal("CODPARC").toString() + ","
-                + "\"idTipoOperacao\": " + (financialVO.asBigDecimal("CODTIPOPER").intValue() == 4107 ? "4401" : financialVO.asBigDecimal("CODTIPOPER").toString()) + ","
+                + "\"idTipoOperacao\": " + (financialVO.asBigDecimal("CODTIPOPER").intValue() == 4107 || financialVO.asBigDecimal("CODTIPOPER").intValue() == 4400 || financialVO.asBigDecimal("CODTIPOPER").intValue() == 4106 ? "4401" : financialVO.asBigDecimal("CODTIPOPER").toString()) + ","
                 + "\"idUsuarioBaixa\": " +  financialVO.asBigDecimal("CODUSU") + ","
                 + "\"idTipoTitulo\": " + "15" + ","
                 + "\"valorDesdobramento\": \"" + financialVO.asBigDecimal("VLRDESDOB").toString() + "\","
@@ -322,5 +325,33 @@ public class FinanceiroEvento extends SnkIntegrationsApi implements EventoProgra
                 + "}";
 
         return json;
+    }
+    
+    private void validarOperacaoFinanceira(PersistenceEvent persistenceEvent) throws Exception {
+    	DynamicVO financeiroVo = (DynamicVO) persistenceEvent.getVo();
+    	ModifingFields modifingFields = persistenceEvent.getModifingFields();
+
+    	if(modifingFields.isModifing("DHBAIXA")
+    		&& modifingFields.getNewValue("DHBAIXA") != null
+    		&& !modifingFields.getNewValue("DHBAIXA").toString().equals("")) {
+	    	if(financeiroVo.asInt("CODTIPTIT")== 26 && financeiroVo.asInt("CODTIPOPER")==3118) {
+	    		throw new Exception("Compra de crédito não pode ser paga com crédito!");
+	    	}
+    	}
+    }
+    
+    private void enviarCreditoPromessa(PersistenceEvent persistenceEvent) throws Exception {
+    	
+    	DynamicVO financeiroVO = (DynamicVO) persistenceEvent.getVo();
+    	ModifingFields modifingFields = persistenceEvent.getModifingFields();
+    	
+    	if(financeiroVO.asBigDecimal("CODTIPOPER").intValue() == 4400
+    		&& modifingFields.isModifing("BH_VLRDEPOSITO") 
+    		&& modifingFields.getNewValue("BH_VLRDEPOSITO") != null
+    		&& financeiroVO.getProperty("DHBAIXA") != null){
+    		String json = this.gerarJsonDespesa(persistenceEvent);
+            String url = this.urlApi + "/v2/caixas/pagamentos";
+            this.enviarDados("POST", url, json);
+    	}
     }
 }
