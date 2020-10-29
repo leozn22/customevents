@@ -3,12 +3,19 @@ package br.com.goup.snkcustomevents.financial;
 import br.com.goup.snkcustomevents.SnkIntegrationsApi;
 import br.com.goup.snkcustomevents.utils.IntegrationApi;
 import br.com.sankhya.extensions.eventoprogramavel.EventoProgramavelJava;
+import br.com.sankhya.jape.dao.JdbcWrapper;
 import br.com.sankhya.jape.event.ModifingFields;
 import br.com.sankhya.jape.event.PersistenceEvent;
 import br.com.sankhya.jape.event.TransactionContext;
+import br.com.sankhya.jape.sql.NativeSql;
 import br.com.sankhya.jape.vo.DynamicVO;
+import br.com.sankhya.jape.wrapper.JapeFactory;
+import br.com.sankhya.jape.wrapper.JapeWrapper;
+import br.com.sankhya.jape.wrapper.fluid.FluidCreateVO;
 import br.com.sankhya.modelcore.auth.AuthenticationInfo;
 
+import java.math.BigDecimal;
+import java.sql.ResultSet;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
@@ -25,11 +32,15 @@ public class FinanceiroEvento extends SnkIntegrationsApi implements EventoProgra
 
     @Override
     public void afterUpdate(PersistenceEvent persistenceEvent) throws Exception {
-    	//DynamicVO financeiroVO = (DynamicVO) persistenceEvent.getVo();
+    	DynamicVO financeiroVO = (DynamicVO) persistenceEvent.getVo();
         ModifingFields modifingFields = persistenceEvent.getModifingFields();
-        if(modifingFields.isModifing("DHBAIXA")) {//modifingFields.isModifing("BH_NRODEPOSITO")
-            if (modifingFields.getNewValue("DHBAIXA") != null) {// && financeiroVO.asInt("CODTIPTIT") != 15) || (financeiroVO.getProperty("DHBAIXA") != null && financeiroVO.asInt("CODTIPTIT") == 15)) {
-                this.enviarFinanceiro(persistenceEvent);
+        if(modifingFields.isModifing("DHBAIXA")) {
+            if (modifingFields.getNewValue("DHBAIXA") != null) {
+                if(financeiroVO.asBigDecimal("CODTIPOPER").intValue() == 3118) {
+                	this.baixarPedidoCredito(persistenceEvent);
+                }else {
+                	this.enviarFinanceiro(persistenceEvent);
+                }
             } else {
                 this.estornoFinanceiro(persistenceEvent);
             }
@@ -352,6 +363,51 @@ public class FinanceiroEvento extends SnkIntegrationsApi implements EventoProgra
     		String json = this.gerarJsonDespesa(persistenceEvent);
             String url = this.urlApi + "/v2/caixas/pagamentos";
             this.enviarDados("POST", url, json);
+    	}
+    }
+    
+    private void baixarPedidoCredito(PersistenceEvent persistenceEvent) throws Exception {
+    	DynamicVO financeiroVO = (DynamicVO) persistenceEvent.getVo();
+    	if(financeiroVO.asBigDecimal("CODTIPOPER").intValue() == 3118) {
+    		JdbcWrapper jdbc 	  = persistenceEvent.getJdbcWrapper();
+    		NativeSql sql		  = new NativeSql(jdbc);
+    		StringBuffer consulta = new StringBuffer();
+    		
+    		consulta = new StringBuffer();
+			consulta.append(" SELECT NUFIN FROM TGFFIN WHERE RECDESP =-1 AND CODTIPTIT = 26 " +
+					" AND CODTIPOPER = 4106 AND NUMNOTA = " + financeiroVO.asBigDecimal("NUMNOTA").intValue());
+			ResultSet fin = sql.executeQuery(consulta.toString());
+			if(!fin.next()) {
+				Calendar dataVencimento  = Calendar.getInstance();
+				dataVencimento.add(Calendar.YEAR, 1);
+				JapeWrapper finDAO = JapeFactory.dao("Financeiro");
+				FluidCreateVO tgffinCre = finDAO.create();
+				tgffinCre.set("CODPARC", financeiroVO.asBigDecimal("CODPARC"));
+				tgffinCre.set("DESDOBRAMENTO", "0");
+				tgffinCre.set("CODTIPOPER", new BigDecimal("4106"));
+				tgffinCre.set("RECDESP", new BigDecimal("-1"));
+				tgffinCre.set("ORIGEM", "F");
+				tgffinCre.set("CODEMP", financeiroVO.asBigDecimal("CODEMP"));
+				tgffinCre.set("NUMNOTA", financeiroVO.asBigDecimal("NUMNOTA"));
+				tgffinCre.set("DTNEG", financeiroVO.asTimestamp("DTNEG"));
+				tgffinCre.set("VLRDESDOB", financeiroVO.asBigDecimal("VLRBAIXA"));
+				tgffinCre.set("DTVENC", TimeUtils.buildData(dataVencimento.get(Calendar.DAY_OF_MONTH),
+															dataVencimento.get(Calendar.MONTH),
+															dataVencimento.get(Calendar.YEAR)));
+				tgffinCre.set("CODNAT", new BigDecimal("4040100"));
+				tgffinCre.set("CODTIPTIT", new BigDecimal("26"));
+				tgffinCre.set("PRAZO", new BigDecimal("0"));
+				tgffinCre.set("CODBCO", new BigDecimal("0"));
+				//tgffinCre.set("BH_NRODEPOSITO", financeiroVO.getProperty("BH_NRODEPOSITO") != null ? financeiroVO.asString("BH_NRODEPOSITO") : "");
+				tgffinCre.set("HISTORICO", "CRÉDITO GERADO PELA CONFIRMAÇÃO DO PAGAMENTO DE PEDIDO DE CRÉDITO");
+				tgffinCre.set("CODUSU", AuthenticationInfo.getCurrent().getUserID());
+				tgffinCre.set("DHMOV", TimeUtils.getNow());
+
+				tgffinCre.save();
+				String json = this.gerarJsonDespesa(persistenceEvent);
+		    	String url  = this.urlApi + "/v2/caixas/pagamentos";
+		    	this.enviarDados("POST", url, json);
+			}
     	}
     }
 }
