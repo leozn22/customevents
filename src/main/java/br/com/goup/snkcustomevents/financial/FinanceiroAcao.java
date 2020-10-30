@@ -327,8 +327,16 @@ public class FinanceiroAcao extends SnkIntegrationsApi implements AcaoRotinaJava
 				? registro.getCampo("CODUSUBAIXA").toString() : registro.getCampo("CODUSU").toString());
 
 		String tipoOperacao = registro.getCampo("CODTIPOPER").toString();
-		if (tipoOperacao.equalsIgnoreCase("4400")) {
+		if (tipoOperacao.equalsIgnoreCase("4400") || tipoOperacao.equalsIgnoreCase("4107")) {
 			tipoOperacao = "4401";
+		}
+
+		String tipoTitulo = (registro.getCampo("NUCOMPENS") != null
+				&& !tipoOperacao.equals("4401") ? "26"
+				: registro.getCampo("CODTIPTIT").toString());
+
+		if (registro.getCampo("CODTIPOPER").toString().equalsIgnoreCase("4107")) {
+			tipoTitulo = "15";
 		}
 
 		String json = "{"
@@ -340,9 +348,7 @@ public class FinanceiroAcao extends SnkIntegrationsApi implements AcaoRotinaJava
 				+ "\"idTipoOperacao\": " + tipoOperacao + ","
 				+ "\"idUsuarioBaixa\": " + idUsuario + ","
 				 
-				+ "\"idTipoTitulo\": " + (registro.getCampo("NUCOMPENS") != null
-										&& !tipoOperacao.equals("4401") ? "26"
-				: registro.getCampo("CODTIPTIT").toString()) + ","
+				+ "\"idTipoTitulo\": " + tipoTitulo  + ","
 
 				+ "\"dataBaixa\": " + dataBaixa + ","
 

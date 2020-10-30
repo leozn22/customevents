@@ -186,7 +186,8 @@ public class FinanceiroEvento extends SnkIntegrationsApi implements EventoProgra
 
         boolean ePagamentoCaixa = financeiroVo.asInt("CODTIPOPER") == 3106
                 && (AuthenticationInfo.getCurrent().getUserID().intValue() == 181
-                    || AuthenticationInfo.getCurrent().getUserID().intValue() == 305);
+                    || AuthenticationInfo.getCurrent().getUserID().intValue() == 305
+                    || AuthenticationInfo.getCurrent().getUserID().intValue() == 314);
 //                && (idCaixa == 21 || idCaixa == 23);
 
         boolean eCompensacao = modifingFields.isModifing("NUCOMPENS")
