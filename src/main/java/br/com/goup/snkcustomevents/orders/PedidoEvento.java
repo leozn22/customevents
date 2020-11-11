@@ -7,6 +7,7 @@ import br.com.sankhya.jape.event.ModifingFields;
 import br.com.sankhya.jape.event.PersistenceEvent;
 import br.com.sankhya.jape.event.TransactionContext;
 import br.com.sankhya.jape.vo.DynamicVO;
+import br.com.sankhya.modelcore.auth.AuthenticationInfo;
 
 public class PedidoEvento extends SnkIntegrationsApi implements EventoProgramavelJava {
 
@@ -21,18 +22,17 @@ public class PedidoEvento extends SnkIntegrationsApi implements EventoProgramave
 
         ModifingFields modifingFields = persistenceEvent.getModifingFields();
         DynamicVO pedidoVO            = (DynamicVO) persistenceEvent.getVo();
-        if (modifingFields.isModifing("STATUSNOTA")
-                && modifingFields.getOldValue("STATUSNOTA").toString().equals("A")
-                && modifingFields.getNewValue("STATUSNOTA") != null
-                && modifingFields.getNewValue("STATUSNOTA").toString().equals("L")
+
+        if (modifingFields.isModifing("DTFATUR")
+                && pedidoVO.getProperty("STATUSNOTA").toString().equals("A")
                 && pedidoVO.asBigDecimal("CODTIPOPER").intValue() == 3119) {
 
             String url = this.urlApi + "/v2/pedidos/" + pedidoVO.getProperty("NUMNOTA").toString() + "/processos";
 
-            String json = "{\"processo\": \"liberar\" }";
+            String usuario  = AuthenticationInfo.getCurrent().getName();
+            String json = "{\"processo\": \"liberar\",  \"usuario\": \"" + usuario +  "\"}";
 
             this.enviarDados("POST", url, json);
-
         }
     }
 
@@ -53,7 +53,8 @@ public class PedidoEvento extends SnkIntegrationsApi implements EventoProgramave
             if (this.qtdException < 2) {
                 enviarDados(verboHttp, url, json);
             }
-//			throw new Exception("Falha: " + e.getMessage() + "\n" + json);
+
+			throw new Exception("Falha: " + e.getMessage() + "\n" + json);
         }
         this.qtdException = 0;
     }
@@ -65,7 +66,7 @@ public class PedidoEvento extends SnkIntegrationsApi implements EventoProgramave
 
     @Override
     public void beforeUpdate(PersistenceEvent persistenceEvent) throws Exception {
-
+        
     }
 
     @Override
