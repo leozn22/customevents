@@ -851,25 +851,25 @@ public class SincronizacaoPromessa extends SnkIntegrationsApi implements EventoP
 	public void afterUpdate(PersistenceEvent arg0) throws Exception {
 		try {
 //			DynamicVO dynVO = (DynamicVO) arg0.getVo();
-			//ModifingFields modifingFields = arg0.getModifingFields();
+			ModifingFields modifingFields = arg0.getModifingFields();
 //			BigDecimal valorDeposito = dynVO.asBigDecimal("VALORDEPOSITO");
 //			if (!(dynVO.asString("STATUSPEDIDO").equals("LI") && dynVO.asString("STATUSPROMESSA").equals("PE")
 //					&& valorDeposito != null
 //					&& valorDeposito.compareTo(BigDecimal.ZERO) == 0)) {
 
 
-			//if ((modifingFields.isModifing("STATUSPROMESSA")
-			//	&& modifingFields.getNewValue("STATUSPROMESSA") != null
-			//	&& !modifingFields.getNewValue("STATUSPROMESSA").toString().equals("PE"))
-			//		|| (modifingFields.isModifing("NUACERTO")
-			//			&& modifingFields.getNewValue("NUACERTO") != null)) {
-			//	enviarDados(arg0);
-			//} else if (modifingFields.isModifing("NUFINDESPADIANT")
-			//		&& modifingFields.getNewValue("NUFINDESPADIANT") != null) {
-			//	baixarPromessa(arg0);
-			//}
+			if ((modifingFields.isModifing("STATUSPROMESSA")
+				&& modifingFields.getNewValue("STATUSPROMESSA") != null
+				&& !modifingFields.getNewValue("STATUSPROMESSA").toString().equals("PE"))
+					|| (modifingFields.isModifing("NUACERTO")
+						&& modifingFields.getNewValue("NUACERTO") != null)) {
+				enviarDados(arg0);
+			} else if (modifingFields.isModifing("NUFINDESPADIANT")
+					&& modifingFields.getNewValue("NUFINDESPADIANT") != null) {
+				baixarPromessa(arg0);
+			}
 			
-			this.verificacoesBaixaPromessa(arg0);
+			//this.verificacoesBaixaPromessa(arg0);
 
 		} catch (Exception e) {
 			throw new Exception("Falha Geral\n" + e.getMessage());

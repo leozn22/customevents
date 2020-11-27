@@ -30,22 +30,37 @@ public class FinanceiroEvento extends SnkIntegrationsApi implements EventoProgra
         this.forceUrl("AllTest"); // Opções: LocalTest, ProductionTest, AllTest, Production
     }
 
+//    @Override
+//    public void afterUpdate(PersistenceEvent persistenceEvent) throws Exception {
+//    	DynamicVO financeiroVO = (DynamicVO) persistenceEvent.getVo();
+//        ModifingFields modifingFields = persistenceEvent.getModifingFields();
+//        if(modifingFields.isModifing("DHBAIXA")) {
+//            if (modifingFields.getNewValue("DHBAIXA") != null) {
+//                if(financeiroVO.asBigDecimal("CODTIPOPER").intValue() == 3118) {
+//                	this.baixarPedidoCredito(persistenceEvent);
+//                }else {
+//                	this.enviarFinanceiro(persistenceEvent);
+//                }
+//            } else {
+//                this.estornoFinanceiro(persistenceEvent);
+//            }
+//        }
+//        this.enviarCreditoPromessa(persistenceEvent);
+//        this.enviarCredito(persistenceEvent);
+//    }
+
     @Override
     public void afterUpdate(PersistenceEvent persistenceEvent) throws Exception {
-    	DynamicVO financeiroVO = (DynamicVO) persistenceEvent.getVo();
+
         ModifingFields modifingFields = persistenceEvent.getModifingFields();
         if(modifingFields.isModifing("DHBAIXA")) {
             if (modifingFields.getNewValue("DHBAIXA") != null) {
-                if(financeiroVO.asBigDecimal("CODTIPOPER").intValue() == 3118) {
-                	this.baixarPedidoCredito(persistenceEvent);
-                }else {
-                	this.enviarFinanceiro(persistenceEvent);
-                }
+                this.enviarFinanceiro(persistenceEvent);
             } else {
                 this.estornoFinanceiro(persistenceEvent);
             }
         }
-        this.enviarCreditoPromessa(persistenceEvent);
+
         this.enviarCredito(persistenceEvent);
     }
 
@@ -71,6 +86,8 @@ public class FinanceiroEvento extends SnkIntegrationsApi implements EventoProgra
         boolean ePromessa = financeiroVo.asInt("CODTIPTIT") == 15;
 
         if (this.eIntegracao(persistenceEvent) || ePromessa) {
+
+            this.verificarEstornoCreditoPedidoCredito(persistenceEvent);
 
             String url = this.urlApi + "/v2/caixas/pagamentos/" + financeiroVo.asBigDecimal("NUFIN").toString();
             this.enviarDados("DELETE", url, "{\"idUsuario\":"
@@ -161,8 +178,8 @@ public class FinanceiroEvento extends SnkIntegrationsApi implements EventoProgra
 
         return idTipoTitulo == 2        //DINHEIRO
                 || idTipoTitulo == 3    //CHEQUE
-                || idTipoTitulo == 4    //BOLETO
-                || idTipoTitulo == 15   //DEPOSITO
+//                || idTipoTitulo == 4    //BOLETO
+//                || idTipoTitulo == 15   //DEPOSITO
                 || idTipoTitulo == 26;  //CREDITO ZAP
     }
 
@@ -171,8 +188,8 @@ public class FinanceiroEvento extends SnkIntegrationsApi implements EventoProgra
         return  idTipoOperacao == 3117
                 || idTipoOperacao == 4401
                 || idTipoOperacao == 4104
-                || idTipoOperacao == 3107
-                || idTipoOperacao == 3106;
+                || idTipoOperacao == 3107;
+//                || idTipoOperacao == 3106; REMOVIDO, POIS ESTAVA ENVIANDO O CREDITO QUE API SINCRONIZA 2X
     }
 
     private boolean eIntegracao(PersistenceEvent persistenceEvent) {
@@ -350,6 +367,31 @@ public class FinanceiroEvento extends SnkIntegrationsApi implements EventoProgra
 	    		throw new Exception("Compra de crédito não pode ser paga com crédito!");
 	    	}
     	}
+    }
+
+    private void verificarEstornoCreditoPedidoCredito(PersistenceEvent persistenceEvent) throws Exception {
+
+        DynamicVO financeiroVo = (DynamicVO) persistenceEvent.getVo();
+
+        if (financeiroVo.asBigDecimal("CODTIPOPER").intValue() == 3118) {
+            JdbcWrapper jdbc = persistenceEvent.getJdbcWrapper();
+            NativeSql sql = new NativeSql(jdbc);
+            StringBuffer consulta = new StringBuffer();
+            consulta.append(" SELECT NUFIN FROM TGFFIN WHERE RECDESP =-1 AND CODTIPTIT = 26 " +
+                    " AND CODTIPOPER = 4106 AND NUMNOTA = " + financeiroVo.getProperty("NUMNOTA"));
+
+            ResultSet finDespesa = sql.executeQuery(consulta.toString());
+
+            if (finDespesa.next()) {
+                JapeWrapper finDao = JapeFactory.dao("Financeiro");
+                try {
+                    finDao.delete(finDespesa.getBigDecimal("NUFIN").intValue());
+                } catch (Exception e) {
+                    throw new Exception("Financeiro de Nro Único "
+                            + finDespesa.getBigDecimal("NUFIN").intValue() + ": \n" + e.getMessage());
+                }
+            }
+        }
     }
     
     private void enviarCreditoPromessa(PersistenceEvent persistenceEvent) throws Exception {
