@@ -54,7 +54,15 @@ public class FinanceiroEvento extends SnkIntegrationsApi implements EventoProgra
 
         ModifingFields modifingFields = persistenceEvent.getModifingFields();
         if(modifingFields.isModifing("DHBAIXA")) {
+
             if (modifingFields.getNewValue("DHBAIXA") != null) {
+
+                DynamicVO financeiroVo = (DynamicVO) persistenceEvent.getVo();
+
+                if (financeiroVo.asInt("CODTIPTIT") == 15 && financeiroVo.getProperty("BH_VLRDEPOSITO") == null) {
+                    throw new Exception("Não é permitido baixar depósito sem dados da promessa!");
+                }
+
                 this.enviarFinanceiro(persistenceEvent);
             } else {
                 this.estornoFinanceiro(persistenceEvent);
@@ -363,7 +371,7 @@ public class FinanceiroEvento extends SnkIntegrationsApi implements EventoProgra
     	if(modifingFields.isModifing("DHBAIXA")
     		&& modifingFields.getNewValue("DHBAIXA") != null
     		&& !modifingFields.getNewValue("DHBAIXA").toString().equals("")) {
-	    	if(financeiroVo.asInt("CODTIPTIT")== 26 && financeiroVo.asInt("CODTIPOPER")==3118) {
+	    	if(financeiroVo.asInt("RECDESP")== 1 && financeiroVo.asInt("CODTIPTIT")== 26 && financeiroVo.asInt("CODTIPOPER")==3118) {
 	    		throw new Exception("Compra de crédito não pode ser paga com crédito!");
 	    	}
     	}

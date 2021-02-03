@@ -94,6 +94,11 @@ public class FinanceiroAcao extends SnkIntegrationsApi implements AcaoRotinaJava
 		// Usado em ambiente de teste
 		if (numeroEstabelecimento.equals("823982346832235") || numeroEstabelecimento == null || numeroEstabelecimento.equals("")) {
 			numeroEstabelecimento = "1023441710";
+		} else {
+			numeroEstabelecimento = numeroEstabelecimento.trim().substring(1, numeroEstabelecimento.trim().length() - 4);
+			if (numeroEstabelecimento.startsWith("0")) {
+				numeroEstabelecimento = numeroEstabelecimento.substring(1);
+			}
 		}
 
 		String tipoVenda = "D";
@@ -160,7 +165,7 @@ public class FinanceiroAcao extends SnkIntegrationsApi implements AcaoRotinaJava
 			creCartao.set("TID", "0");
 			creCartao.set("TAXAADM", tgfTef.getBigDecimal("VLRTAXA"));
 			creCartao.set("NUBAN", idBandeira);
-			creCartao.set("NUESTABELECIMENTO", numeroEstabelecimento.trim().substring(2, numeroEstabelecimento.trim().length() - 4));
+			creCartao.set("NUESTABELECIMENTO", numeroEstabelecimento);
 			creCartao.set("DTPAGCARTAO", tgfTef.getTimestamp("DTTRANSACAO"));
 			creCartao.set("CODAUT", tgfTef.getString("AUTORIZACAO"));
 			creCartao.set("NUNOTA", registro.getCampo("NUNOTA"));
@@ -189,7 +194,7 @@ public class FinanceiroAcao extends SnkIntegrationsApi implements AcaoRotinaJava
 				+ "\"idTipoProduto\": " + idProduto + ","
 				+ "\"idBandeira\": " + idBandeira + ","
 				+ "\"idPagamento\": \"0\", "
-				+ "\"idEstabelecimento\": \"" +  numeroEstabelecimento.trim().substring(2, numeroEstabelecimento.trim().length() - 4) + "\","
+				+ "\"idEstabelecimento\": \"" +  numeroEstabelecimento + "\","
 				+ "\"descricaoProduto\": \"" + bandeira + "\","
 				+ "\"codigoAutorizacao\": \"" + tgfTef.getString("AUTORIZACAO") + "\","
 				+ "\"nsu\": \"" + tgfTef.getString("NUMNSU") + "\","
@@ -327,7 +332,7 @@ public class FinanceiroAcao extends SnkIntegrationsApi implements AcaoRotinaJava
 				? registro.getCampo("CODUSUBAIXA").toString() : registro.getCampo("CODUSU").toString());
 
 		String tipoOperacao = registro.getCampo("CODTIPOPER").toString();
-		if (tipoOperacao.equalsIgnoreCase("4400") || tipoOperacao.equalsIgnoreCase("4107")) {
+		if ((tipoOperacao.equalsIgnoreCase("4100") && (registro.getCampo("NUCOMPENS") != null)) || tipoOperacao.equalsIgnoreCase("4400") || tipoOperacao.equalsIgnoreCase("4107")) {
 			tipoOperacao = "4401";
 		}
 

@@ -76,7 +76,10 @@ public class UpdateTef extends SnkIntegrationsApi implements EventoProgramavelJa
 			if (valor.contains("/POS") || valor.contains("823982346832235")) {
 
 				numeroEstabelecimento = valor.replaceAll("\\s*([0-9]+).*", "$1").trim();
-				numeroEstabelecimento = numeroEstabelecimento.trim().substring(2, numeroEstabelecimento.trim().length() - 4);
+				numeroEstabelecimento = numeroEstabelecimento.trim().substring(1, numeroEstabelecimento.trim().length() - 4);
+				if (numeroEstabelecimento.startsWith("0")) {
+					numeroEstabelecimento = numeroEstabelecimento.substring(1);
+				}
 			}
 
 //			TIPO NEGOCIAÇÃO
