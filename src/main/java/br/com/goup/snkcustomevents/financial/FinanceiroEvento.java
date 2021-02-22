@@ -57,11 +57,11 @@ public class FinanceiroEvento extends SnkIntegrationsApi implements EventoProgra
 
             if (modifingFields.getNewValue("DHBAIXA") != null) {
 
-                DynamicVO financeiroVo = (DynamicVO) persistenceEvent.getVo();
-
-                if (financeiroVo.asInt("CODTIPTIT") == 15 && financeiroVo.getProperty("BH_VLRDEPOSITO") == null) {
-                    throw new Exception("Não é permitido baixar depósito sem dados da promessa!");
-                }
+//                DynamicVO financeiroVo = (DynamicVO) persistenceEvent.getVo();
+//
+//                if (financeiroVo.asInt("CODTIPTIT") == 15 && financeiroVo.getProperty("BH_VLRDEPOSITO") == null) {
+//                    throw new Exception("Não é permitido baixar depósito sem dados da promessa!");
+//                }
 
                 this.enviarFinanceiro(persistenceEvent);
             } else {

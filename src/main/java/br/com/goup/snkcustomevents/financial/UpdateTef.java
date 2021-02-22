@@ -195,10 +195,12 @@ public class UpdateTef extends SnkIntegrationsApi implements EventoProgramavelJa
 			}
 			r1.getStatement().close();
 		}
-		
-		r1 = sql.executeQuery("SELECT NUCTRL FROM AD_TCCCAB WHERE NUNOTA = "
-				+ idNota + " AND NSU = '" + tefVO.getProperty("NUMNSU").toString() + "'"
-				+ " AND CODAUT = '" + tefVO.getProperty("AUTORIZACAO").toString() + "'");
+
+		String textoNuNota = (idNota != null ? " AND NUNOTA = " + idNota : "");
+
+		r1 = sql.executeQuery("SELECT NUCTRL FROM AD_TCCCAB WHERE "
+				+ " NSU = '" + tefVO.getProperty("NUMNSU").toString() + "'"
+				+ " AND CODAUT = '" + tefVO.getProperty("AUTORIZACAO").toString() + "'" + textoNuNota);
 				
 		if (!r1.next()) {
 			JapeWrapper logDAO   = JapeFactory.dao("AD_TCCCAB");
@@ -218,6 +220,7 @@ public class UpdateTef extends SnkIntegrationsApi implements EventoProgramavelJa
 //			creLog.set("VLRTRANSACAO", new BigDecimal(tefVO.getProperty("VLRTRANSACAO").toString()));
 			creLog.set("VLRTRANSACAO", this.valorTotalTransacao);
 			creLog.set("NSU", tefVO.getProperty("NUMNSU").toString());
+//			creLog.set("TIPTITULO", tefVO.getProperty("NUMNSU").toString());
 			creLog.save();
 		}
 		r1.getStatement().close();

@@ -1,26 +1,20 @@
 package br.com.goup.snkcustomevents.financial;
 
-import java.math.BigDecimal;
-import java.sql.ResultSet;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-
 import br.com.goup.snkcustomevents.SnkIntegrationsApi;
 import br.com.goup.snkcustomevents.utils.IntegrationApi;
 import br.com.sankhya.extensions.actionbutton.AcaoRotinaJava;
 import br.com.sankhya.extensions.actionbutton.ContextoAcao;
 import br.com.sankhya.extensions.actionbutton.QueryExecutor;
 import br.com.sankhya.extensions.actionbutton.Registro;
-import br.com.sankhya.jape.dao.JdbcWrapper;
-import br.com.sankhya.jape.event.ModifingFields;
-import br.com.sankhya.jape.event.PersistenceEvent;
-import br.com.sankhya.jape.sql.NativeSql;
-import br.com.sankhya.jape.vo.DynamicVO;
 import br.com.sankhya.jape.wrapper.JapeFactory;
 import br.com.sankhya.jape.wrapper.JapeWrapper;
 import br.com.sankhya.jape.wrapper.fluid.FluidCreateVO;
 import org.json.JSONArray;
 import org.json.JSONObject;
+
+import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 
 public class FinanceiroAcao extends SnkIntegrationsApi implements AcaoRotinaJava {
 
@@ -148,14 +142,20 @@ public class FinanceiroAcao extends SnkIntegrationsApi implements AcaoRotinaJava
 			adTccCab.close();
 		}
 
-		adTccCab.nativeSelect("SELECT NUCTRL FROM AD_TCCCAB WHERE NUNOTA = " + registro.getCampo("NUNOTA")
-				+ " AND NSU = '" + tgfTef.getString("NUMNSU") + "'"
-				+ " AND CODAUT = '" + tgfTef.getString("AUTORIZACAO") + "'");
+		String textoNuNota = (registro.getCampo("NUNOTA") != null ? " AND NUNOTA = " + registro.getCampo("NUNOTA"): "");
+
+//		String nsu =  tgfTef.getString("AUTORIZACAO").trim().substring(tgfTef.getString("AUTORIZACAO").trim().length() - 6);
+
+		adTccCab.nativeSelect("SELECT NUCTRL FROM AD_TCCCAB WHERE "
+				+ " NSU = '" + tgfTef.getString("NUMNSU") + "'"
+				+ " AND CODAUT = '" + tgfTef.getString("AUTORIZACAO") + "'" + textoNuNota );
+				;
 		boolean isAdTccCab = adTccCab.next();
 
 		tgfTef.nativeSelect(consulta.toString());
 		tgfTef.next();
 		if (!isAdTccCab) {
+
 			JapeWrapper cartaoDAO   = JapeFactory.dao("AD_TCCCAB");
 			FluidCreateVO creCartao = cartaoDAO.create();
 
@@ -172,6 +172,7 @@ public class FinanceiroAcao extends SnkIntegrationsApi implements AcaoRotinaJava
 //			creCartao.set("VLRTRANSACAO", tgfTef.getBigDecimal("VLRTRANSACAO"));
 			creCartao.set("VLRTRANSACAO", this.valorTotalTransacao);
 			creCartao.set("NSU", tgfTef.getString("NUMNSU"));
+			creCartao.set("TIPTITULO", registro.getCampo("CODTIPTIT"));
 			creCartao.save();
 		}
 
