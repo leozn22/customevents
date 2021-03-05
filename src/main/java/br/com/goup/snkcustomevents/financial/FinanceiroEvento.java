@@ -85,6 +85,23 @@ public class FinanceiroEvento extends SnkIntegrationsApi implements EventoProgra
 //            }
 
             this.enviarDados("POST", url, json);
+
+            ModifingFields modifingFields = persistenceEvent.getModifingFields();
+            DynamicVO financeiroVo 		  = (DynamicVO) persistenceEvent.getVo();
+
+            int idTipoTitulo = (modifingFields.isModifing("CODTIPTIT")
+                    ? new BigDecimal(modifingFields.getNewValue("CODTIPTIT").toString()).intValue()
+                    : (modifingFields.isModifing("NUCOMPENS") && modifingFields.getNewValue("NUCOMPENS") != null
+                    ? 26
+                    : financeiroVo.asBigDecimal("CODTIPTIT").intValue()));
+            String tipoPagamento = (idTipoTitulo == 2 ? "dinheiro" : (idTipoTitulo == 26 ? "dinheiro" : "cheque"));
+
+            boolean eOperacaoValida = (financeiroVo.asInt("CODTIPOPER") == 3106 || financeiroVo.asInt("CODTIPOPER") == 3107 || financeiroVo.asInt("CODTIPOPER") == 3117);
+
+            if (eOperacaoValida) {
+                InformacaoPagamentoRequisicao informacaoPagamentoRequisicao = new InformacaoPagamentoRequisicao();
+                informacaoPagamentoRequisicao.informarPagamentoSite(tipoPagamento, financeiroVo.asBigDecimal("NUMNOTA").toString());
+            }
         }
     }
 

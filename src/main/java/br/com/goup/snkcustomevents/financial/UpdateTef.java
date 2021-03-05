@@ -52,7 +52,7 @@ public class UpdateTef extends SnkIntegrationsApi implements EventoProgramavelJa
 		}
 	}
 
-	private String gerarJsonCartao(PersistenceEvent persistenceEvent, BigDecimal idNota, BigDecimal idAcerto) throws Exception {
+	private String gerarJsonCartao(PersistenceEvent persistenceEvent, BigDecimal idNota, BigDecimal idAcerto, BigDecimal numeroNota) throws Exception {
 
 		DynamicVO tefVO    			 = (DynamicVO) persistenceEvent.getVo();
 		String comprovante 			 = tefVO.asString("COMPROVANTE");
@@ -222,6 +222,12 @@ public class UpdateTef extends SnkIntegrationsApi implements EventoProgramavelJa
 			creLog.set("NSU", tefVO.getProperty("NUMNSU").toString());
 //			creLog.set("TIPTITULO", tefVO.getProperty("NUMNSU").toString());
 			creLog.save();
+
+			if (idNota != null) {
+				InformacaoPagamentoRequisicao informacaoPagamentoRequisicao = new InformacaoPagamentoRequisicao();
+				String tipoPagamento = (this.isCredito ? "cartaoCredito" : "cartaoDebito");
+				informacaoPagamentoRequisicao.informarPagamentoSite(tipoPagamento, numeroNota.toString());
+			}
 		}
 		r1.getStatement().close();
 
@@ -407,7 +413,10 @@ public class UpdateTef extends SnkIntegrationsApi implements EventoProgramavelJa
 				}
 
 				try {
-					jsonCartao = this.gerarJsonCartao(persistenceEvent, result.getBigDecimal("NUNOTA"), result.getBigDecimal("NUCOMPENS"));
+					jsonCartao = this.gerarJsonCartao(persistenceEvent,
+													result.getBigDecimal("NUNOTA"),
+													result.getBigDecimal("NUCOMPENS"),
+													result.getBigDecimal("NUMNOTA"));
 				} catch (Exception e) {
 					throw new Exception("Falha ao gerar Cartão " + e.getMessage());
 				}

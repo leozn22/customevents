@@ -469,6 +469,8 @@ public class SincronizacaoPromessa extends SnkIntegrationsApi implements EventoP
 
 					this.enviarDadosV2(metodo, url, json);
 					temSincronizacao = true;
+					InformacaoPagamentoRequisicao informacaoPagamentoRequisicao = new InformacaoPagamentoRequisicao();
+					informacaoPagamentoRequisicao.informarPagamentoSite("deposito", prmVO.getProperty("NUMNOTA").toString());
 					break;
 
 				} else if (result.getBigDecimal("CODTIPTIT").intValue() == 26 && idAcertoFin > 0
@@ -531,6 +533,9 @@ public class SincronizacaoPromessa extends SnkIntegrationsApi implements EventoP
 
 					this.enviarDadosV2(metodo, url, json);
 					temSincronizacao = true;
+
+					InformacaoPagamentoRequisicao informacaoPagamentoRequisicao = new InformacaoPagamentoRequisicao();
+					informacaoPagamentoRequisicao.informarPagamentoSite("deposito", prmVO.getProperty("NUMNOTA").toString());
 				}
 			}
 		}
