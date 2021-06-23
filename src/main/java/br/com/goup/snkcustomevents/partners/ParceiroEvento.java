@@ -53,7 +53,7 @@ public class ParceiroEvento extends SnkIntegrationsApi implements EventoPrograma
         put("AD_FRAUDULENTO", "clienteDesonesto");
         put("AD_FRAUDECART", "bloqueioCartao");
         put("CODTIPPARC", "idPerfilSankhya");
-
+        put("HOMEPAGE", "site");
     }};
 
     private static Map<String, String> CAMPOS_INTEGRACAO_CONTATO = new HashMap<String, String>() {{

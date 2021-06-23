@@ -56,6 +56,8 @@ public class Parceiro {
 
     private String ip;
 
+    private String site;
+
     private ParceiroContato contatoPrincipal;
 
     private ParceiroEndereco enderecoPadrao;
@@ -266,6 +268,14 @@ public class Parceiro {
 
     public void setIp(String ip) {
         this.ip = ip;
+    }
+
+    public String getSite() {
+        return site;
+    }
+
+    public void setSite(String site) {
+        this.site = site;
     }
 
     public ParceiroContato getContatoPrincipal() {
