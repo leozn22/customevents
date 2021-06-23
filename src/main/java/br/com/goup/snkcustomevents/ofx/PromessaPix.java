@@ -31,63 +31,67 @@ public class PromessaPix {
         AcessoBanco bd = new AcessoBanco();
         try {
 
+            boolean continuar = true;
+            while (continuar) {
 //            ResultSet promessas = bd.find(Constantes.SQL_GET_PROMESSAS_PIX, nuImp, nuImp);
-            ResultSet promessas = bd.findCriteria(String.format(Constantes.SQL_GET_PROMESSAS_PIX, nuImp, nuImp));
+                ResultSet promessas = bd.findCriteria(String.format(Constantes.SQL_GET_PROMESSAS_PIX, nuImp, nuImp));
 
+                int cont = 0;
+                while (promessas.next()) {
 
-            while (promessas.next()) {
+                    cont ++;
+                    contaBancaria = promessas.getBigDecimal("CODCTABCOINT");
 
-                contaBancaria = promessas.getBigDecimal("CODCTABCOINT");
+                    BigDecimal saldoConciliacao = promessas.getBigDecimal("VALORDEPOSITO");
 
-                BigDecimal saldoConciliacao = promessas.getBigDecimal("VALORDEPOSITO");
-
-                ResultSet financeirosConciliar;
-                try {
-                financeirosConciliar = bd.find(Constantes.SQL_GET_FINANCEIROS_CONCILIAR,
-                        promessas.getTimestamp("DATADEPOSITO"),
-                        promessas.getString("NRODESPOSITO"),
-                        promessas.getBigDecimal("NUMNOTA"));
-                } catch (Exception e) {
-                    throw new Exception("Erro de dados: \n"
-                            + promessas.getDate("DATADEPOSITO").toString()
-                            + "\n" +  promessas.getString("NRODESPOSITO")
-                            + "\n" +  promessas.getBigDecimal("NUMNOTA"));
-                }
-
-                while (financeirosConciliar.next()) {
-
-                    // realiza concilia��o controlando saldo baixado
-
-                    JapeWrapper bancoDAO;
+                    ResultSet financeirosConciliar;
                     try {
-                        bancoDAO = JapeFactory.dao(DynamicEntityNames.MOVIMENTO_BANCARIO);
+                        financeirosConciliar = bd.find(Constantes.SQL_GET_FINANCEIROS_CONCILIAR,
+                                promessas.getTimestamp("DATADEPOSITO"),
+                                promessas.getString("NRODESPOSITO"),
+                                promessas.getBigDecimal("NUMNOTA"));
                     } catch (Exception e) {
-                        throw new Exception("Instancia movimento bancario");
+                        throw new Exception("Erro de dados: \n"
+                                + promessas.getDate("DATADEPOSITO").toString()
+                                + "\n" + promessas.getString("NRODESPOSITO")
+                                + "\n" + promessas.getBigDecimal("NUMNOTA"));
                     }
 
-                    DynamicVO movVO;
-                    try {
-                        movVO = bancoDAO.findByPK(financeirosConciliar.getBigDecimal("NUBCO"));
-                    } catch (Exception e) {
-                        throw new Exception("Find Movimento");
-                    }
+                    while (financeirosConciliar.next()) {
 
-                    boolean temValorConcilair = saldoConciliacao.compareTo(financeirosConciliar.getBigDecimal("VLRDESDOB")) >= 0;
+                        // realiza concilia��o controlando saldo baixado
 
-                    if (temValorConcilair && !movVO.getProperty("CONCILIADO").toString().equals("S")) {
-
+                        JapeWrapper bancoDAO;
                         try {
-                            bancoDAO.prepareToUpdate(movVO)
-                                    .set("CONCILIADO", "S")
-                                    .set("DHCONCILIACAO", financeirosConciliar.getTimestamp("DHBAIXA"))
-                                    .set("CODUSU", AuthenticationInfo.getCurrent().getUserID())
-                                    .update();
-
-                            addUmConciliados();
+                            bancoDAO = JapeFactory.dao(DynamicEntityNames.MOVIMENTO_BANCARIO);
                         } catch (Exception e) {
-                            throw new Exception("Update");
+                            throw new Exception("Instancia movimento bancario");
                         }
-                    }
+
+                        DynamicVO movVO;
+                        try {
+                            movVO = bancoDAO.findByPK(financeirosConciliar.getBigDecimal("NUBCO"));
+                        } catch (Exception e) {
+                            throw new Exception("Find Movimento");
+                        }
+
+                        boolean temValorConcilair = saldoConciliacao.compareTo(financeirosConciliar.getBigDecimal("VLRDESDOB")) >= 0;
+
+                        if (temValorConcilair && !movVO.getProperty("CONCILIADO").toString().equals("S")) {
+
+                            try {
+                                bancoDAO.prepareToUpdate(movVO)
+                                        .set("CONCILIADO", "S")
+                                        .set("DHCONCILIACAO", financeirosConciliar.getTimestamp("DHBAIXA"))
+                                        .set("CODUSU", AuthenticationInfo.getCurrent().getUserID())
+                                        .update();
+
+                                addUmConciliados();
+                            } catch (Exception e) {
+                                throw new Exception("Update no registro - N. bco: " + financeirosConciliar.getBigDecimal("NUBCO")
+                                        + "\n" + e.getMessage());
+                            }
+                        }
 
 //                    if (!movVO.getProperty("CONCILIADO").toString().equals("S")) {
                         saldoConciliacao = saldoConciliacao.subtract(financeirosConciliar.getBigDecimal("VLRDESDOB"));
@@ -114,6 +118,11 @@ public class PromessaPix {
                     }
 //                }
 
+                }
+
+                if (cont<299) {
+                    continuar = false;
+                }
             }
         }catch (Exception e){
             e.printStackTrace();

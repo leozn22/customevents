@@ -59,6 +59,8 @@ public class Constantes {
             "WHERE\n" +
             "    EXB.RECDESP = 1\n" +
             "AND IEB.NUIMPORT = %s\n" +
+            "AND EXB.CONCILIADO <> 'S'\n" +
+            "                AND ROWNUM <= 300\n" +
             // não existe mais de uma correspondencia para o deposito
             "AND NOT EXISTS(\n" +
             "    SELECT\n" +
@@ -93,7 +95,9 @@ public class Constantes {
             "                INNER JOIN TGFCAB CAB ON CAB.NUNOTA = PRM.NUNOTA \n" +
             "            WHERE\n" +
             "                EXB.RECDESP = 1\n" +
-            "            AND IEB.NUIMPORT = %s) ITS";
+            "                AND EXB.CONCILIADO <> 'S'\n" +
+            "                AND ROWNUM <= 300\n" +
+            "            AND IEB.NUIMPORT = %s ) ITS";
 
     public static final String SQL_GET_FINANCEIROS_BAIXA = "" +
             "SELECT\n" +
@@ -122,7 +126,8 @@ public class Constantes {
             "AND FIN.RECDESP = 1\n" +
             "AND FIN.NUBCO IS NOT NULL\n" +
             "AND FIN.DHBAIXA IS NOT NULL\n" +
-            "AND FIN.NUMNOTA = ?";
+            "AND FIN.NUMNOTA = ?\n ";
+//            "AND ROWNUM <= 300 ";
 
 //    public static final String SQL_GET_FINANCEIROS_CONCILIAR = "" +
 //            "SELECT\n" +
