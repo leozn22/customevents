@@ -108,11 +108,16 @@ public class ParceiroTipoEntregaEvento extends SnkIntegrationsApi implements Eve
             parceiroTipoEntrega.setIdParceiroTipoEntrega(UUID.randomUUID().toString().toUpperCase());
             parceiroTipoEntrega.setCodigoParceiro(codigoParceiro);
             parceiroTipoEntrega.setNomeTipoEntrega(descricaoTipoEntrega);
+
             String valorIntegracao = parceiroTipoEntregaVo.getProperty("PADRAO") != null ? parceiroTipoEntregaVo.getProperty("PADRAO").toString(): "N";
             valorIntegracao = "S".equals(valorIntegracao) ? "SIM" : valorIntegracao;
             valorIntegracao = "N".equals(valorIntegracao) ? "NÃO" : valorIntegracao;
+
+            String valorAtivo = parceiroTipoEntregaVo.getProperty("BLOQUEADO") != null ? parceiroTipoEntregaVo.getProperty("BLOQUEADO").toString() : "N";
+            valorAtivo = "S".equals(valorAtivo) ? "BLOQUEADO" : "SIM";
+
             parceiroTipoEntrega.setPadrao(valorIntegracao);
-            parceiroTipoEntrega.setAtivo("SIM");
+            parceiroTipoEntrega.setAtivo(valorAtivo);
             parceiroTipoEntrega.setDataCadastro(dataAlteracao);
             parceiroTipoEntrega.setDataAlteracao(dataAlteracao);
             parceiroTipoEntrega.setIdCadastrador("8CCE8E13-9573-4128-9BF1-C740AD16347E");
@@ -169,35 +174,52 @@ public class ParceiroTipoEntregaEvento extends SnkIntegrationsApi implements Eve
 
         int codigoParceiro = this.localizarCodigoParceiro(ParceiroTipoEntregaVo.getProperty("CODPARC"));
 
-        if (codigoParceiro > 0 && modifingFields.isModifing("PADRAO")) {
+        if (codigoParceiro > 0) {
             String descricaoTipoEntrega = this.localizarNomeTipoEntrega(ParceiroTipoEntregaVo.getProperty("CODTET"));
             ParceiroTipoEntrega parceiroTipoEntrega = new ParceiroTipoEntrega();
             parceiroTipoEntrega.setCodigoParceiro(codigoParceiro);
             parceiroTipoEntrega.setNomeTipoEntrega(descricaoTipoEntrega);
 
-            String valorIntegracao = modifingFields.getNewValue("PADRAO").toString();
-            valorIntegracao = "S".equals(valorIntegracao) ? "SIM" : valorIntegracao;
-            valorIntegracao = "N".equals(valorIntegracao) ? "NÃO" : valorIntegracao;
-            parceiroTipoEntrega.setPadrao(valorIntegracao);
+            String padrao = null;
 
-            String dataAlteracao = "";
-            Calendar dtAlteracao = Calendar.getInstance();
-            try {
-                SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                dataAlteracao = format.format(dtAlteracao.getTime());
-            } catch (Exception e) {
-                throw new Exception("Falha na Data Alteração");
+            if (modifingFields.isModifing("PADRAO")) {
+                padrao = modifingFields.getNewValue("PADRAO").toString();
+                padrao = "S".equals(padrao) ? "SIM" : padrao;
+                padrao = "N".equals(padrao) ? "NÃO" : padrao;
+
+                parceiroTipoEntrega.setPadrao(padrao);
             }
 
-            parceiroTipoEntrega.setDataAlteracao(dataAlteracao);
-            parceiroTipoEntrega.setIdAlterador("8CCE8E13-9573-4128-9BF1-C740AD16347E");
-            parceiroTipoEntrega.setNomeUsuarioComputador(AuthenticationInfo.getCurrent().getClientName());
-            parceiroTipoEntrega.setIp(AuthenticationInfo.getCurrent().getClientIP());
+            String ativo = null;
 
-            Gson gson = new Gson();
-            String json = gson.toJson(parceiroTipoEntrega);
-            String url = this.urlApi + "/v2/parceiros/tipos-entrega?esperar=true&usuario="+ AuthenticationInfo.getCurrent().getName();
-            this.enviarDados("PUT", url, "[" + json + "]");
+            if (modifingFields.isModifing("BLOQUEADO")) {
+                ativo = modifingFields.getNewValue("BLOQUEADO").toString();
+                ativo = "S".equals(ativo) ? "BLOQUEADO" : ativo;
+                ativo = "N".equals(ativo) ? "SIM" : ativo;
+
+                parceiroTipoEntrega.setAtivo(ativo);
+            }
+
+            if (padrao != null || ativo != null) {
+                String dataAlteracao = "";
+                Calendar dtAlteracao = Calendar.getInstance();
+                try {
+                    SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                    dataAlteracao = format.format(dtAlteracao.getTime());
+                } catch (Exception e) {
+                    throw new Exception("Falha na Data Alteração");
+                }
+
+                parceiroTipoEntrega.setDataAlteracao(dataAlteracao);
+                parceiroTipoEntrega.setIdAlterador("8CCE8E13-9573-4128-9BF1-C740AD16347E");
+                parceiroTipoEntrega.setNomeUsuarioComputador(AuthenticationInfo.getCurrent().getClientName());
+                parceiroTipoEntrega.setIp(AuthenticationInfo.getCurrent().getClientIP());
+
+                Gson gson = new Gson();
+                String json = gson.toJson(parceiroTipoEntrega);
+                String url = this.urlApi + "/v2/parceiros/tipos-entrega?esperar=true&usuario=" + AuthenticationInfo.getCurrent().getName();
+                this.enviarDados("PUT", url, "[" + json + "]");
+            }
         }
     }
 
