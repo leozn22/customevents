@@ -18,6 +18,8 @@ public class ParceiroContato {
 
     private String aceitaEmail;
 
+    private String dataNascimento;
+
     public String getNome() {
         return nome;
     }
@@ -80,5 +82,13 @@ public class ParceiroContato {
 
     public void setAceitaEmail(String aceitaEmail) {
         this.aceitaEmail = aceitaEmail;
+    }
+
+    public String getDataNascimento() {
+        return dataNascimento;
+    }
+
+    public void setDataNascimento(String dataNascimento) {
+        this.dataNascimento = dataNascimento;
     }
 }
