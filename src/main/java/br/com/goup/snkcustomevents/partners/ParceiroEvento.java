@@ -14,6 +14,7 @@ import com.google.gson.Gson;
 
 import java.lang.reflect.Field;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
@@ -54,6 +55,16 @@ public class ParceiroEvento extends SnkIntegrationsApi implements EventoPrograma
         put("AD_FRAUDECART", "bloqueioCartao");
         put("CODTIPPARC", "idPerfilSankhya");
         put("HOMEPAGE", "site");
+    }};
+
+    private static  Map<String, String>  CAMPOS_BLOQUEADO_SNK = new HashMap<String, String>(){{
+        put("CGC_CPF", "O campo CNPJ / CPF não pode ser alterado");
+        put("CODEND", "O campo ENDEREÇO não pode ser alterado");
+        put("NUMEND", "O campo NUMERO não pode ser alterado");
+        put("CODBAI", "O campo BAIRRO não pode ser alterado");
+        put("CODCID", "O campo CIDADE não pode ser alterado");
+        put("AD_CODUFS2", "O campo UF não pode ser alterado");
+        put("CEP", "O campo CEP não pode ser alterado");
     }};
 
     private static Map<String, String> CAMPOS_INTEGRACAO_CONTATO = new HashMap<String, String>() {{
@@ -110,7 +121,17 @@ public class ParceiroEvento extends SnkIntegrationsApi implements EventoPrograma
                 String status = "S".equals(modifingFields.getNewValue("AD_LIBERADO").toString().toUpperCase()) ? "ATIVO" : "PENDENTE";
                 parceiro.setStatus(status);
             }
+
+            StringBuilder erros = null;
+
             for (Map.Entry<String, Object[]> campoSnk : modifingFields.entrySet()) {
+                if (CAMPOS_BLOQUEADO_SNK.containsKey(campoSnk.getKey())) {
+                    if (erros == null) {
+                        erros = new StringBuilder();
+                    }
+
+                    erros.append("<font size='12'><b>" + CAMPOS_BLOQUEADO_SNK.get(campoSnk.getKey()) + "</b></font><br>");
+                }
 
                 String campo = CAMPOS_INTEGRACAO_PARCEIRO.get(campoSnk.getKey());
                 if (campo != null) {
@@ -301,7 +322,10 @@ public class ParceiroEvento extends SnkIntegrationsApi implements EventoPrograma
                 if (parceiroEndereco != null) {
                     parceiro.setEnderecoPadrao(parceiroEndereco);
                 }
+            }
 
+            if (erros != null) {
+                throw new Exception(erros.toString());
             }
 
             if (temIntegracao) {
