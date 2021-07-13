@@ -59,12 +59,12 @@ public class ParceiroEvento extends SnkIntegrationsApi implements EventoPrograma
 
     private static  Map<String, String>  CAMPOS_BLOQUEADO_SNK = new HashMap<String, String>(){{
         put("CGC_CPF", "O campo CNPJ / CPF não pode ser alterado");
-        put("CODEND", "O campo ENDEREÇO não pode ser alterado");
-        put("NUMEND", "O campo NUMERO não pode ser alterado");
-        put("CODBAI", "O campo BAIRRO não pode ser alterado");
-        put("CODCID", "O campo CIDADE não pode ser alterado");
-        put("AD_CODUFS2", "O campo UF não pode ser alterado");
-        put("CEP", "O campo CEP não pode ser alterado");
+        //put("CODEND", "O campo ENDEREÇO não pode ser alterado");
+        //put("NUMEND", "O campo NUMERO não pode ser alterado");
+        //put("CODBAI", "O campo BAIRRO não pode ser alterado");
+        //put("CODCID", "O campo CIDADE não pode ser alterado");
+        //put("AD_CODUFS2", "O campo UF não pode ser alterado");
+        //put("CEP", "O campo CEP não pode ser alterado");
     }};
 
     private static Map<String, String> CAMPOS_INTEGRACAO_CONTATO = new HashMap<String, String>() {{
