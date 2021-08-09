@@ -5,7 +5,7 @@ public class PacoteNota {
 
     private int nuNota;
 
-    private int numeroNFe;
+    private int numeroNfe;
 
     private String chaveAcesso;
 
@@ -29,12 +29,12 @@ public class PacoteNota {
         this.nuNota = nuNota;
     }
 
-    public int getNumeroNFe() {
-        return numeroNFe;
+    public int getNumeroNfe() {
+        return numeroNfe;
     }
 
-    public void setNumeroNFe(int numeroNFe) {
-        this.numeroNFe = numeroNFe;
+    public void setNumeroNfe(int numeroNfe) {
+        this.numeroNfe = numeroNfe;
     }
 
     public String getChaveAcesso() {

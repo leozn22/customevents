@@ -77,7 +77,7 @@ public class PacoteNotaEvento extends SnkIntegrationsApi implements EventoProgra
             PacoteNota pacoteNota = new PacoteNota();
             pacoteNota.setNuPct(numeroPacote);
             pacoteNota.setNuNota(cabecalhoVo.asInt("NUNOTA"));
-            pacoteNota.setNumeroNFe(cabecalhoVo.asInt("NUMNOTA"));
+            pacoteNota.setNumeroNfe(cabecalhoVo.asInt("NUMNOTA"));
             pacoteNota.setChaveAcesso(cabecalhoVo.asString("CHAVENFE"));
             pacoteNota.setSerieNfe(cabecalhoVo.asString("SERIENOTA"));
             pacoteNota.setStatusNfe(cabecalhoVo.asString("STATUSNFE"));
@@ -85,7 +85,7 @@ public class PacoteNotaEvento extends SnkIntegrationsApi implements EventoProgra
             Gson gson = new Gson();
             String json = gson.toJson(pacoteNota);
             String url = this.urlApi + "/v2/snk/pacotes/itens?assincrono=true";
-            this.enviarDados("PUT", url,"[" + json + "]");
+            this.enviarDados("PUT", url, json);
         }
     }
 
