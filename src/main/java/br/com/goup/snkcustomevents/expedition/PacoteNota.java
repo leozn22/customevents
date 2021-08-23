@@ -1,17 +1,11 @@
 package br.com.goup.snkcustomevents.expedition;
 
 public class PacoteNota {
-    private int nuPct;
+    private int nuPct = 0;
 
-    private int nuNota;
+    private int nuNota = 0;
 
-    private int numeroNfe;
-
-    private String chaveAcesso;
-
-    private String serieNfe;
-
-    private String statusNfe;
+    private String tipoDocumento = "";
 
     public int getNuPct() {
         return nuPct;
@@ -29,35 +23,11 @@ public class PacoteNota {
         this.nuNota = nuNota;
     }
 
-    public int getNumeroNfe() {
-        return numeroNfe;
+    public String getTipoDocumento() {
+        return tipoDocumento;
     }
 
-    public void setNumeroNfe(int numeroNfe) {
-        this.numeroNfe = numeroNfe;
-    }
-
-    public String getChaveAcesso() {
-        return chaveAcesso;
-    }
-
-    public void setChaveAcesso(String chaveAcesso) {
-        this.chaveAcesso = chaveAcesso;
-    }
-
-    public String getSerieNfe() {
-        return serieNfe;
-    }
-
-    public void setSerieNfe(String serieNfe) {
-        this.serieNfe = serieNfe;
-    }
-
-    public String getStatusNfe() {
-        return statusNfe;
-    }
-
-    public void setStatusNfe(String statusNfe) {
-        this.statusNfe = statusNfe;
+    public void setTipoDocumento(String tipoDocumento) {
+        this.tipoDocumento = tipoDocumento;
     }
 }

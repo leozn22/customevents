@@ -30,15 +30,13 @@ public class PacoteNotaEvento extends SnkIntegrationsApi implements EventoProgra
         } catch (Exception e) {
             if (this.qtdException < 3) {
                 enviarDados(verboHttp, url, json);
-            } else {
-                throw new Exception("Falha: " + e.getMessage() + "\n" + json);
             }
         }
         this.qtdException = 0;
     }
 
-    private int retornaNumeroPacote(PersistenceEvent persistenceEvent) {
-        int numeroPacote = 0;
+    private PacoteNota retornaNumeroPacote(PersistenceEvent persistenceEvent) {
+        PacoteNota retorno = new PacoteNota();
 
         DynamicVO cabecalhoNotaVo = (DynamicVO) persistenceEvent.getVo();
 
@@ -46,45 +44,44 @@ public class PacoteNotaEvento extends SnkIntegrationsApi implements EventoProgra
         NativeSql sql		   = new NativeSql(jdbc);
 
         StringBuffer consulta = new StringBuffer();
-        consulta.append("    SELECT NUPCT, ");
-        consulta.append("	        NUNOTAREMESSA ");
-        consulta.append("      FROM TZAPCT_TGFCAB ");
-        consulta.append("     WHERE NUNOTAREMESSA = :NUNOTAREMESSA ");
-        consulta.append("     AND ROWNUM = 1 ");
-        consulta.append("     ORDER BY NUPCT DESC ");
+        consulta.append("SELECT * FROM ");
+        consulta.append("( ");
+        consulta.append("select 'NFE' AS TIPO, NUPCT, NUNOTAREMESSA AS NUNOTA FROM ");
+        consulta.append("where NUNOTAREMESSA = :NUNOTAREMESSA ");
+        consulta.append("UNION ");
+        consulta.append("select 'NFSE' AS TIPO, NUPCT, NUNOTAREMESSA AS NUNOTA FROM ");
+        consulta.append("where NUNOTASERVICO = :NUNOTAREMESSA ");
+        consulta.append("UNION ");
+        consulta.append("select 'CTE' AS TIPO, NUPCT, NUNOTAREMESSA AS NUNOTA FROM ");
+        consulta.append("where NUNOTACTE = :NUNOTAREMESSA ");
+        consulta.append(") TIPO_NOTA ");
+        consulta.append("WHERE ROWNUM = 1 ");
+        consulta.append("ORDER BY TIPO_NOTA.NUPCT DESC ");
 
         try {
             sql.setNamedParameter("NUNOTAREMESSA", cabecalhoNotaVo.asBigDecimal("NUNOTA").intValue());
             ResultSet result = sql.executeQuery(consulta.toString());
 
             if (result.next()) {
-                numeroPacote = result.getBigDecimal("NUPCT").intValue();
+                retorno.setNuPct(result.getBigDecimal("NUPCT").intValue());
+                retorno.setNuNota(result.getBigDecimal("NUNOTA").intValue());
+                retorno.setTipoDocumento(result.getBigDecimal("TIPO").toString());
             }
         } catch (Exception e) {
             e.printStackTrace();
-            numeroPacote = 0;
+            retorno.setNuPct(0);
         }
 
-        return numeroPacote;
+        return retorno;
     }
 
     private void sincronizarNota(PersistenceEvent persistenceEvent) throws Exception {
-        int numeroPacote = retornaNumeroPacote(persistenceEvent);
+        PacoteNota pacoteNota = retornaNumeroPacote(persistenceEvent);
 
-        if (numeroPacote > 0) {
-            DynamicVO cabecalhoVo = (DynamicVO) persistenceEvent.getVo();
-
-            PacoteNota pacoteNota = new PacoteNota();
-            pacoteNota.setNuPct(numeroPacote);
-            pacoteNota.setNuNota(cabecalhoVo.asInt("NUNOTA"));
-            pacoteNota.setNumeroNfe(cabecalhoVo.asInt("NUMNOTA"));
-            pacoteNota.setChaveAcesso(cabecalhoVo.asString("CHAVENFE"));
-            pacoteNota.setSerieNfe(cabecalhoVo.asString("SERIENOTA"));
-            pacoteNota.setStatusNfe(cabecalhoVo.asString("STATUSNFE"));
-
+        if (pacoteNota.getNuPct() > 0) {
             Gson gson = new Gson();
             String json = gson.toJson(pacoteNota);
-            String url = this.urlApi + "/v2/snk/pacotes/itens?assincrono=true";
+            String url = this.urlApi + "/v2/snk/pacotes/notas?assincrono=true";
             this.enviarDados("PUT", url, json);
         }
     }

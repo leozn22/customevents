@@ -26,7 +26,7 @@ public class PacoteEvento extends SnkIntegrationsApi implements EventoProgramave
             if (this.qtdException < 3) {
                 enviarDados(verboHttp, url, json);
             } else {
-                throw new Exception("Falha: " + e.getMessage() + "\n" + json);
+                throw new Exception("Falha: " + e.getMessage() + "\n Url:" + url + "\n" + json);
             }
         }
         this.qtdException = 0;
@@ -40,7 +40,7 @@ public class PacoteEvento extends SnkIntegrationsApi implements EventoProgramave
 
         if ((numeroPacote > 0) && ("AE".equals(status))) {
             String url = this.urlApi + "/v2/snk/pacotes/sincronizacoes/" + numeroPacote +  "?assincrono=true";
-            this.enviarDados("POST", url, null);
+            this.enviarDados("POST", url, "");
         }
     }
 
