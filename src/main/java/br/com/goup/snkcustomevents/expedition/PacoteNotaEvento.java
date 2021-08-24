@@ -35,7 +35,7 @@ public class PacoteNotaEvento extends SnkIntegrationsApi implements EventoProgra
         this.qtdException = 0;
     }
 
-    private PacoteNota retornaNumeroPacote(PersistenceEvent persistenceEvent) {
+    private PacoteNota retornaDadosPacote(PersistenceEvent persistenceEvent) {
         PacoteNota retorno = new PacoteNota();
 
         DynamicVO cabecalhoNotaVo = (DynamicVO) persistenceEvent.getVo();
@@ -46,26 +46,26 @@ public class PacoteNotaEvento extends SnkIntegrationsApi implements EventoProgra
         StringBuffer consulta = new StringBuffer();
         consulta.append("SELECT * FROM ");
         consulta.append("( ");
-        consulta.append("select 'NFE' AS TIPO, NUPCT, NUNOTAREMESSA AS NUNOTA FROM ");
-        consulta.append("where NUNOTAREMESSA = :NUNOTAREMESSA ");
+        consulta.append("select 'NFE' AS TIPO, NUPCT, NUNOTAREMESSA AS NUNOTA FROM TZAPCT_TGFCAB ");
+        consulta.append("where NUNOTAREMESSA = :NUNOTA ");
         consulta.append("UNION ");
-        consulta.append("select 'NFSE' AS TIPO, NUPCT, NUNOTAREMESSA AS NUNOTA FROM ");
-        consulta.append("where NUNOTASERVICO = :NUNOTAREMESSA ");
+        consulta.append("select 'NFSE' AS TIPO, NUPCT, NUNOTASERVICO AS NUNOTA FROM TZAPCT_TGFCAB ");
+        consulta.append("where NUNOTASERVICO = :NUNOTA ");
         consulta.append("UNION ");
-        consulta.append("select 'CTE' AS TIPO, NUPCT, NUNOTAREMESSA AS NUNOTA FROM ");
-        consulta.append("where NUNOTACTE = :NUNOTAREMESSA ");
+        consulta.append("select 'CTE' AS TIPO, NUPCT, NUNOTACTE AS NUNOTA FROM TZAPCT_TGFCAB ");
+        consulta.append("where NUNOTACTE = :NUNOTA ");
         consulta.append(") TIPO_NOTA ");
         consulta.append("WHERE ROWNUM = 1 ");
         consulta.append("ORDER BY TIPO_NOTA.NUPCT DESC ");
 
         try {
-            sql.setNamedParameter("NUNOTAREMESSA", cabecalhoNotaVo.asBigDecimal("NUNOTA").intValue());
+            sql.setNamedParameter("NUNOTA", cabecalhoNotaVo.asBigDecimal("NUNOTA").intValue());
             ResultSet result = sql.executeQuery(consulta.toString());
 
             if (result.next()) {
                 retorno.setNuPct(result.getBigDecimal("NUPCT").intValue());
                 retorno.setNuNota(result.getBigDecimal("NUNOTA").intValue());
-                retorno.setTipoDocumento(result.getBigDecimal("TIPO").toString());
+                retorno.setTipoDocumento(result.getString("TIPO"));
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -76,12 +76,13 @@ public class PacoteNotaEvento extends SnkIntegrationsApi implements EventoProgra
     }
 
     private void sincronizarNota(PersistenceEvent persistenceEvent) throws Exception {
-        PacoteNota pacoteNota = retornaNumeroPacote(persistenceEvent);
+        PacoteNota pacoteNota = this.retornaDadosPacote(persistenceEvent);
 
         if (pacoteNota.getNuPct() > 0) {
             Gson gson = new Gson();
             String json = gson.toJson(pacoteNota);
             String url = this.urlApi + "/v2/snk/pacotes/notas?assincrono=true";
+
             this.enviarDados("PUT", url, json);
         }
     }
@@ -103,9 +104,7 @@ public class PacoteNotaEvento extends SnkIntegrationsApi implements EventoProgra
 
     @Override
     public void afterInsert(PersistenceEvent persistenceEvent) throws Exception {
-        if (AuthenticationInfo.getCurrent().getUserID().intValue() != 139) {
-            this.sincronizarNota(persistenceEvent);
-        }
+
     }
 
     @Override
