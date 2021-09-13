@@ -25,8 +25,6 @@ public class PacoteEvento extends SnkIntegrationsApi implements EventoProgramave
         } catch (Exception e) {
             if (this.qtdException < 3) {
                 enviarDados(verboHttp, url, json);
-            } else {
-                throw new Exception("Falha: " + e.getMessage() + "\n Url:" + url + "\n" + json);
             }
         }
         this.qtdException = 0;
