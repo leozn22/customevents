@@ -49,6 +49,12 @@
 		</dependency>
 
 		<dependency>
+			<groupId>br.com.sankhya.monitor</groupId>
+			<artifactId>lughlib</artifactId>
+			<version>4.0.5</version>
+		</dependency>
+
+		<dependency>
 			<groupId>com.google.code.gson</groupId>
 			<artifactId>gson</artifactId>
 			<version>2.8.5</version>

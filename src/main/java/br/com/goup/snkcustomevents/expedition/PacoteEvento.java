@@ -2,6 +2,7 @@ package br.com.goup.snkcustomevents.expedition;
 
 import br.com.goup.snkcustomevents.SnkIntegrationsApi;
 import br.com.goup.snkcustomevents.utils.IntegrationApi;
+import br.com.lugh.performance.PerformanceMonitor;
 import br.com.sankhya.extensions.eventoprogramavel.EventoProgramavelJava;
 import br.com.sankhya.jape.event.PersistenceEvent;
 import br.com.sankhya.jape.event.TransactionContext;
@@ -31,15 +32,16 @@ public class PacoteEvento extends SnkIntegrationsApi implements EventoProgramave
     }
 
     private void sincronizarPacote(PersistenceEvent persistenceEvent) throws Exception {
-        DynamicVO pacoteVo = (DynamicVO) persistenceEvent.getVo();
+        PerformanceMonitor.INSTANCE.measureJava("integracaoPacoteZap", ()->{
+            DynamicVO pacoteVo = (DynamicVO) persistenceEvent.getVo();
+            int numeroPacote = pacoteVo.asInt("NUPCT");
+            String status = pacoteVo.asString("STATUS");
 
-        int numeroPacote = pacoteVo.asInt("NUPCT");
-        String status = pacoteVo.asString("STATUS");
-
-        if ((numeroPacote > 0) && ("AE".equals(status))) {
-            String url = this.urlApi + "/v2/snk/pacotes/sincronizacoes/" + numeroPacote +  "?assincrono=true";
-            this.enviarDados("POST", url, "");
-        }
+            if ((numeroPacote > 0) && ("AE".equals(status))) {
+                String url = this.urlApi + "/v2/snk/pacotes/sincronizacoes/" + numeroPacote +  "?assincrono=true";
+                this.enviarDados("POST", url, "");
+            }
+        } );
     }
 
     @Override
@@ -59,9 +61,7 @@ public class PacoteEvento extends SnkIntegrationsApi implements EventoProgramave
 
     @Override
     public void afterInsert(PersistenceEvent persistenceEvent) throws Exception {
-        if (AuthenticationInfo.getCurrent().getUserID().intValue() != 139) {
-            this.sincronizarPacote(persistenceEvent);
-        }
+
     }
 
     @Override

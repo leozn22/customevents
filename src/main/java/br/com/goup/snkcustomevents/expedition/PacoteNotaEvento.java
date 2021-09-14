@@ -2,6 +2,7 @@ package br.com.goup.snkcustomevents.expedition;
 
 import br.com.goup.snkcustomevents.SnkIntegrationsApi;
 import br.com.goup.snkcustomevents.utils.IntegrationApi;
+import br.com.lugh.performance.PerformanceMonitor;
 import br.com.sankhya.extensions.eventoprogramavel.EventoProgramavelJava;
 import br.com.sankhya.jape.dao.JdbcWrapper;
 import br.com.sankhya.jape.event.PersistenceEvent;
@@ -76,15 +77,17 @@ public class PacoteNotaEvento extends SnkIntegrationsApi implements EventoProgra
     }
 
     private void sincronizarNota(PersistenceEvent persistenceEvent) throws Exception {
-        PacoteNota pacoteNota = this.retornaDadosPacote(persistenceEvent);
+        PerformanceMonitor.INSTANCE.measureJava("integracaoNotaPacoteZap", ()->{
+            PacoteNota pacoteNota = this.retornaDadosPacote(persistenceEvent);
 
-        if (pacoteNota.getNuPct() > 0) {
-            Gson gson = new Gson();
-            String json = gson.toJson(pacoteNota);
-            String url = this.urlApi + "/v2/snk/pacotes/notas?assincrono=true";
+            if (pacoteNota.getNuPct() > 0) {
+                Gson gson = new Gson();
+                String json = gson.toJson(pacoteNota);
+                String url = this.urlApi + "/v2/snk/pacotes/notas?assincrono=true";
 
-            this.enviarDados("PUT", url, json);
-        }
+                this.enviarDados("PUT", url, json);
+            }
+        });
     }
 
     @Override
