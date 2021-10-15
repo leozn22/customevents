@@ -4,6 +4,7 @@ import br.com.goup.snkcustomevents.SnkIntegrationsApi;
 import br.com.goup.snkcustomevents.utils.IntegrationApi;
 import br.com.lugh.performance.PerformanceMonitor;
 import br.com.sankhya.extensions.eventoprogramavel.EventoProgramavelJava;
+import br.com.sankhya.jape.core.JapeSession;
 import br.com.sankhya.jape.event.PersistenceEvent;
 import br.com.sankhya.jape.event.TransactionContext;
 import br.com.sankhya.jape.vo.DynamicVO;
@@ -13,7 +14,7 @@ public class PacoteEvento extends SnkIntegrationsApi implements EventoProgramave
 
     private int qtdException = 0;
 
-    public PacoteEvento(){
+    public PacoteEvento() {
         this.exigeAutenticacao = true;
         this.forceUrl("AllTest"); // Opções: LocalTest, ProductionTest, AllTest, Production
     }
@@ -32,16 +33,20 @@ public class PacoteEvento extends SnkIntegrationsApi implements EventoProgramave
     }
 
     private void sincronizarPacote(PersistenceEvent persistenceEvent) throws Exception {
-        PerformanceMonitor.INSTANCE.measureJava("integracaoPacoteZap", ()->{
-            DynamicVO pacoteVo = (DynamicVO) persistenceEvent.getVo();
-            int numeroPacote = pacoteVo.asInt("NUPCT");
-            String status = pacoteVo.asString("STATUS");
+        DynamicVO pacoteVo = (DynamicVO) persistenceEvent.getVo();
+        int numeroPacote = pacoteVo.asInt("NUPCT");
+        String status = pacoteVo.asString("STATUS");
+        String exportado = pacoteVo.asString("TZAEXPORTADO");
 
-            if ((numeroPacote > 0) && ("AE".equals(status))) {
-                String url = this.urlApi + "/v2/snk/pacotes/sincronizacoes/" + numeroPacote +  "?assincrono=true";
+        //boolean enviou_dados_zap = JapeSession.getPropertyAsBoolean("enviou_dados_zap", false);
+        if ((numeroPacote > 0) && ("AE".equals(status)) && !"S".equals(exportado)) {
+            //JapeSession.putProperty("enviou_dados_zap",true);
+
+            PerformanceMonitor.INSTANCE.measureJava("integracaoPacoteZap", () -> {
+                String url = this.urlApi + "/v2/snk/pacotes/sincronizacoes/" + numeroPacote + "?assincrono=true";
                 this.enviarDados("POST", url, "");
-            }
-        } );
+            });
+        }
     }
 
     @Override

@@ -4,6 +4,7 @@ import br.com.goup.snkcustomevents.SnkIntegrationsApi;
 import br.com.goup.snkcustomevents.utils.IntegrationApi;
 import br.com.lugh.performance.PerformanceMonitor;
 import br.com.sankhya.extensions.eventoprogramavel.EventoProgramavelJava;
+import br.com.sankhya.jape.core.JapeSession;
 import br.com.sankhya.jape.dao.JdbcWrapper;
 import br.com.sankhya.jape.event.PersistenceEvent;
 import br.com.sankhya.jape.event.TransactionContext;
@@ -18,7 +19,7 @@ public class PacoteNotaEvento extends SnkIntegrationsApi implements EventoProgra
 
     private int qtdException = 0;
 
-    public PacoteNotaEvento(){
+    public PacoteNotaEvento() {
         this.exigeAutenticacao = true;
         this.forceUrl("AllTest"); // Opções: LocalTest, ProductionTest, AllTest, Production
     }
@@ -41,8 +42,8 @@ public class PacoteNotaEvento extends SnkIntegrationsApi implements EventoProgra
 
         DynamicVO cabecalhoNotaVo = (DynamicVO) persistenceEvent.getVo();
 
-        JdbcWrapper jdbc 	   = persistenceEvent.getJdbcWrapper();
-        NativeSql sql		   = new NativeSql(jdbc);
+        JdbcWrapper jdbc = persistenceEvent.getJdbcWrapper();
+        NativeSql sql = new NativeSql(jdbc);
 
         StringBuffer consulta = new StringBuffer();
         consulta.append("SELECT * FROM ");
@@ -77,17 +78,29 @@ public class PacoteNotaEvento extends SnkIntegrationsApi implements EventoProgra
     }
 
     private void sincronizarNota(PersistenceEvent persistenceEvent) throws Exception {
-        PerformanceMonitor.INSTANCE.measureJava("integracaoNotaPacoteZap", ()->{
+
+        DynamicVO pacoteVo = (DynamicVO) persistenceEvent.getVo();
+
+        String statusNfe = pacoteVo.asString("STATUSNFE");
+        String statusNfSe = pacoteVo.asString("STATUSNFSE");
+
+        //boolean enviou_dados_zap = JapeSession.getPropertyAsBoolean("enviou_dados_nota_zap", false);
+
+        if ("A".equals(statusNfe) || "A".equals(statusNfSe)){
             PacoteNota pacoteNota = this.retornaDadosPacote(persistenceEvent);
 
             if (pacoteNota.getNuPct() > 0) {
-                Gson gson = new Gson();
-                String json = gson.toJson(pacoteNota);
-                String url = this.urlApi + "/v2/snk/pacotes/notas?assincrono=true";
+                //JapeSession.putProperty("enviou_dados_nota_zap",true);
 
-                this.enviarDados("PUT", url, json);
+                PerformanceMonitor.INSTANCE.measureJava("integracaoNotaPacoteZap", () -> {
+                    Gson gson = new Gson();
+                    String json = gson.toJson(pacoteNota);
+                    String url = this.urlApi + "/v2/snk/pacotes/notas?assincrono=true";
+
+                    this.enviarDados("PUT", url, json);
+                });
             }
-        });
+        }
     }
 
     @Override
