@@ -68,7 +68,8 @@ abstract public class SnkIntegrationsApi {
 	
 	// Todas as bases de teste
 	protected String getUrlAllTest() {
-		this.urlApi = "https://api-odin-dev.azurewebsites.net";
+//		this.urlApi = "https://api-odin-dev.azurewebsites.net";
+		this.urlApi = "http://sgw.zapgrafica.com.br:8081";
 		if(!this.exigeAutenticacao) {
 			this.urlApi+= "/api";
 		}
