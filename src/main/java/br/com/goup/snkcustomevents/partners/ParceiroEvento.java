@@ -298,8 +298,10 @@ public class ParceiroEvento extends SnkIntegrationsApi implements EventoPrograma
                         }
 
                         valorIntegracao = enderecoVO.getProperty("NOMEEND").toString();
-                        parceiroEndereco.setTipoLogradouro(enderecoVO.getProperty("TIPO").toString());
 
+                        if (enderecoVO.getProperty("TIPO") != null) {
+                            parceiroEndereco.setTipoLogradouro(enderecoVO.getProperty("TIPO").toString());
+                        }
                     }
 
                     if ("CODBAI".equals(campoSnk.getKey().toString())) {
@@ -337,8 +339,14 @@ public class ParceiroEvento extends SnkIntegrationsApi implements EventoPrograma
                         }
 
                         valorIntegracao = cidadeVO.getProperty("NOMECID").toString();
-                        parceiroEndereco.setUf(cidadeVO.getProperty("UF").toString());
-                        parceiroEndereco.setCodigoIbge(cidadeVO.getProperty("CODMUNFIS").toString());
+
+                        if (cidadeVO.getProperty("UF") != null) {
+                            parceiroEndereco.setUf(cidadeVO.getProperty("UF").toString());
+                        }
+
+                        if (cidadeVO.getProperty("CODMUNFIS") != null) {
+                            parceiroEndereco.setCodigoIbge(cidadeVO.getProperty("CODMUNFIS").toString());
+                        }
                     }
 
                     valorIntegracao = valorIntegracao == null ? "" : valorIntegracao;
