@@ -119,7 +119,22 @@ public class ParceiroEvento extends SnkIntegrationsApi implements EventoPrograma
             String ativoSnk = (ParceiroVo.getProperty("ATIVO") != null) ? ParceiroVo.getProperty("ATIVO").toString() : "";
             String statusSnk = (ParceiroVo.getProperty("AD_LIBERADO") != null) ? ParceiroVo.getProperty("AD_LIBERADO").toString() : "";
 
-            if (modifingFields.isModifing("ATIVO")) {
+            if (modifingFields.isModifing("ATIVO") && modifingFields.isModifing("AD_LIBERADO")) {
+                if("S".equals(modifingFields.getNewValue("ATIVO").toString().toUpperCase()) && "S".equals(modifingFields.getNewValue("AD_LIBERADO").toString().toUpperCase())){
+                    status = "ATIVO";
+                    ativo = "SIM";
+                }
+                else if("S".equals(modifingFields.getNewValue("ATIVO").toString().toUpperCase()) && !"S".equals(modifingFields.getNewValue("AD_LIBERADO").toString().toUpperCase())){
+                    ativo = "SIM";
+                }
+                else if(!"S".equals(modifingFields.getNewValue("ATIVO").toString().toUpperCase()) && "S".equals(modifingFields.getNewValue("AD_LIBERADO").toString().toUpperCase())){
+                    status = "ATIVO";
+                }
+                else if(!"S".equals(modifingFields.getNewValue("ATIVO").toString().toUpperCase()) && !"S".equals(modifingFields.getNewValue("AD_LIBERADO").toString().toUpperCase())){
+                    status = "BLOQUEADO";
+                }
+            }
+            else if (modifingFields.isModifing("ATIVO")) {
                 if("S".equals(modifingFields.getNewValue("ATIVO").toString().toUpperCase()) && "S".equals(statusSnk)){
                     status = "ATIVO";
                     ativo = "SIM";
@@ -149,6 +164,19 @@ public class ParceiroEvento extends SnkIntegrationsApi implements EventoPrograma
                     status = "BLOQUEADO";
                 }
             }
+            else if (ativoSnk != null && !ativoSnk.equals("") && statusSnk != null && !statusSnk.equals("")) {
+                if("S".equals(ativoSnk)){
+                    ativo = "SIM";
+                }
+
+                if("S".equals(statusSnk)){
+                    status = "ATIVO";
+                }
+
+                if(!"S".equals(ativoSnk) && !"S".equals(statusSnk)){
+                    status = "BLOQUEADO";
+                }
+            }
 
             parceiro.setStatus(status);
             parceiro.setAtivo(ativo);
@@ -156,6 +184,7 @@ public class ParceiroEvento extends SnkIntegrationsApi implements EventoPrograma
             StringBuilder erros = null;
 
             for (Map.Entry<String, Object[]> campoSnk : modifingFields.entrySet()) {
+
                 if (CAMPOS_BLOQUEADO_SNK.containsKey(campoSnk.getKey())) {
                     if (erros == null) {
                         erros = new StringBuilder();
@@ -371,6 +400,7 @@ public class ParceiroEvento extends SnkIntegrationsApi implements EventoPrograma
                 Gson gson = new Gson();
                 String json = gson.toJson(parceiro);
                 String url = this.urlApi + "/v2/parceiros?esperar=true&usuario="+AuthenticationInfo.getCurrent().getName();
+
                 this.enviarDados("PUT", url, "[" + json + "]");
             }
 
