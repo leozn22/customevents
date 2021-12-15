@@ -10,10 +10,14 @@ import br.com.sankhya.jape.event.PersistenceEvent;
 import br.com.sankhya.jape.event.TransactionContext;
 import br.com.sankhya.jape.sql.NativeSql;
 import br.com.sankhya.jape.vo.DynamicVO;
+import br.com.sankhya.jape.wrapper.JapeFactory;
+import br.com.sankhya.jape.wrapper.JapeWrapper;
 import br.com.sankhya.modelcore.auth.AuthenticationInfo;
+import br.com.sankhya.modelcore.util.DynamicEntityNames;
 import com.google.gson.Gson;
 
 import java.sql.ResultSet;
+import java.util.Collection;
 
 public class PacoteNotaEvento extends SnkIntegrationsApi implements EventoProgramavelJava {
 
@@ -35,6 +39,27 @@ public class PacoteNotaEvento extends SnkIntegrationsApi implements EventoProgra
             }
         }
         this.qtdException = 0;
+    }
+
+    private void atualizaInformacaoPacoteDenegada(PacoteNota pacoteNota) throws Exception {
+        if (pacoteNota.getNuPct() <= 0) {
+            return;
+        }
+
+        JapeWrapper pedidoPacoteDAO;
+        try {
+            pedidoPacoteDAO = JapeFactory.dao("TzapctTgfcab");
+
+            Collection<DynamicVO> listPedidoVO = pedidoPacoteDAO.find("NUNOTAREMESSA = ?", pacoteNota.getNuNota());
+
+            for (DynamicVO pedidoPacote: listPedidoVO) {
+                pedidoPacoteDAO.prepareToUpdate(pedidoPacote)
+                        .set("AD_STATUS_DENEGADA", "1")
+                        .update();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private PacoteNota retornaDadosPacote(PersistenceEvent persistenceEvent) {
@@ -86,19 +111,25 @@ public class PacoteNotaEvento extends SnkIntegrationsApi implements EventoProgra
 
         //boolean enviou_dados_zap = JapeSession.getPropertyAsBoolean("enviou_dados_nota_zap", false);
 
-        if ("A".equals(statusNfe) || "A".equals(statusNfSe)){
+        this.retornaDadosPacote(persistenceEvent);
+
+        if ("D".equals(statusNfe) || "A".equals(statusNfe) || "A".equals(statusNfSe)){
             PacoteNota pacoteNota = this.retornaDadosPacote(persistenceEvent);
 
             if (pacoteNota.getNuPct() > 0) {
                 //JapeSession.putProperty("enviou_dados_nota_zap",true);
 
-                PerformanceMonitor.INSTANCE.measureJava("integracaoNotaPacoteZap", () -> {
-                    Gson gson = new Gson();
-                    String json = gson.toJson(pacoteNota);
-                    String url = this.urlApi + "/v2/snk/pacotes/notas?assincrono=true";
+                if ("D".equals(statusNfe)) {
+                    this.atualizaInformacaoPacoteDenegada(pacoteNota);
+                } else {
+                    PerformanceMonitor.INSTANCE.measureJava("integracaoNotaPacoteZap", () -> {
+                        Gson gson = new Gson();
+                        String json = gson.toJson(pacoteNota);
+                        String url = this.urlApi + "/v2/snk/pacotes/notas?assincrono=true";
 
-                    this.enviarDados("PUT", url, json);
-                });
+                        this.enviarDados("PUT", url, json);
+                    });
+                }
             }
         }
     }
