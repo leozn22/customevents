@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.sql.ResultSet;
 
 import br.com.sankhya.jape.EntityFacade;
+import br.com.sankhya.jape.core.JapeSession;
 import br.com.sankhya.jape.dao.JdbcWrapper;
 import br.com.sankhya.jape.sql.NativeSql;
 import br.com.sankhya.modelcore.auth.AuthenticationInfo;
@@ -15,7 +16,6 @@ import br.com.sankhya.modelcore.util.SPBeanUtils;
 import br.com.sankhya.ws.ServiceContext;
 import org.cuckoo.core.ScheduledAction;
 import org.cuckoo.core.ScheduledActionContext;
-import javax.servlet.http.HttpServletRequest;
 
 public class ConfirmaNota implements ScheduledAction {
 
@@ -63,7 +63,7 @@ public class ConfirmaNota implements ScheduledAction {
                                    "  WHERE CAB.STATUSNOTA = 'P'\n" +
                                    "    AND TOPER.AD_ATIVA_SCHEDULE = 'S'\n" +
                                    "  ORDER BY CAB.DTNEG DESC\n" +
-                                   "FETCH NEXT 100 ROWS ONLY");
+                                   "FETCH NEXT 25 ROWS ONLY");
 
                 ResultSet rsNotas = sqlNotas.executeQuery();
 
@@ -71,13 +71,24 @@ public class ConfirmaNota implements ScheduledAction {
 
                     BigDecimal nunota = rsNotas.getBigDecimal("NUNOTA");
                     System.out.println("Acao Agendada - Confirma Nota Nro. Unico: " + nunota);
+
+                    JapeSession.SessionHandle hnd = null;
                     try {
-                        BarramentoRegra barramentoConfirmacao = BarramentoRegra.build(CentralFaturamento.class,
-                                "regrasConfirmacaoSilenciosa.xml", AuthenticationInfo.getCurrent());
-                        barramentoConfirmacao.setValidarSilencioso(true);
-                        ConfirmacaoNotaHelper.confirmarNota(nunota, barramentoConfirmacao);
+                        hnd = JapeSession.open();
+                        hnd.execWithTX(() -> {
+                            try {
+                                BarramentoRegra barramentoConfirmacao = BarramentoRegra.build(CentralFaturamento.class,
+                                        "regrasConfirmacaoSilenciosa.xml", AuthenticationInfo.getCurrent());
+                                barramentoConfirmacao.setValidarSilencioso(true);
+                                ConfirmacaoNotaHelper.confirmarNota(nunota, barramentoConfirmacao);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        });
                     } catch (Exception e) {
                         e.printStackTrace();
+                    } finally {
+                        JapeSession.close(hnd);
                     }
                 }
                 rsNotas.close();
