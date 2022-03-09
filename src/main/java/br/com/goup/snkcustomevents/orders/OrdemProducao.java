@@ -23,9 +23,9 @@ import java.util.List;
 
 public class OrdemProducao {
 
-    private ContextoAcao contextoAcao;
-    private ServiceContext sctx;
-    private LancamentoOrdemProducaoSP lancamentoOrdemProducaoSP;
+    private final ContextoAcao contextoAcao;
+    private final ServiceContext sctx;
+    private final LancamentoOrdemProducaoSP lancamentoOrdemProducaoSP;
 
     public OrdemProducao(ContextoAcao contextoAcao) throws Exception {
         this.contextoAcao = contextoAcao;
@@ -37,10 +37,10 @@ public class OrdemProducao {
         lancamentoOrdemProducaoSP = (LancamentoOrdemProducaoSP) ServiceUtils.getStatelessFacade(LancamentoOrdemProducaoSPHome.JNDI_NAME, LancamentoOrdemProducaoSPHome.class);
     }
 
-    public RetornoLancamentoOrdemProducao processoProducao(ItemProducao itemProducao) throws Exception {
+    public RetornoLancamentoOrdemProducao processoProducao(ItemProducao itemProducao) {
         RetornoLancamentoOrdemProducao retorno = new RetornoLancamentoOrdemProducao();
 
-        BigDecimal nulop = BigDecimal.ZERO;
+        BigDecimal nulop;
         try {
             nulop = this.getNuLop();
 
@@ -108,24 +108,22 @@ public class OrdemProducao {
 
     private boolean inserirProdutoHTML5(BigDecimal nulop, Integer idProcesso, ItemProducao itemProducao) throws Exception {
         try {
-            StringBuilder json = new StringBuilder();
-            json.append("{");
-            json.append(" 'params': {");
-            json.append("    'agruparEmUnicaOP': false,");
-            json.append("    'codplp': " + itemProducao.getCodigoPlanta().toString() + ",");
-            json.append("    'codprod': " + itemProducao.getCodigoProduto().toString() + ",");
-            json.append("    'controle': {},");
-            json.append("    'idproc': " + idProcesso + ",");
-            json.append("    'minLote': '0.0',");
-            json.append("    'multIdeal': '0.0',");
-            json.append("    'nulop': " + nulop + ",");
-            json.append("    'oldTamLote': '" + itemProducao.getTamanhoLote().toString() + "',");
-            json.append("    'opDesmonte': 'N',");
-            json.append("    'tamlote': '" + itemProducao.getTamanhoLote().toString() + "'");
-            json.append("  }");
-            json.append("}");
-
-            sctx.setRequestBody(Json2XMLParser.jsonToElement("root", new JsonParser().parse(json.toString()).getAsJsonObject()));
+            String json = "{" +
+                    " 'params': {" +
+                    "    'agruparEmUnicaOP': false," +
+                    "    'codplp': " + itemProducao.getCodigoPlanta().toString() + "," +
+                    "    'codprod': " + itemProducao.getCodigoProduto().toString() + "," +
+                    "    'controle': {}," +
+                    "    'idproc': " + idProcesso + "," +
+                    "    'minLote': '0.0'," +
+                    "    'multIdeal': '0.0'," +
+                    "    'nulop': " + nulop + "," +
+                    "    'oldTamLote': '" + itemProducao.getTamanhoLote().toString() + "'," +
+                    "    'opDesmonte': 'N'," +
+                    "    'tamlote': '" + itemProducao.getTamanhoLote().toString() + "'" +
+                    "  }" +
+                    "}";
+            sctx.setRequestBody(Json2XMLParser.jsonToElement("root", new JsonParser().parse(json).getAsJsonObject()));
             lancamentoOrdemProducaoSP.inserirProdutoHTML5(sctx);
 
             return true;
@@ -138,19 +136,17 @@ public class OrdemProducao {
 
     private boolean alterarAtributoProduto(BigDecimal nulop, ItemProducao itemProducao) throws Exception {
         try {
-            StringBuilder json = new StringBuilder();
-            json.append("{");
-            json.append(" 'params': {");
-            json.append("    'nulop': " + nulop + ",");
-            json.append("    'seqop': 1,");
-            json.append("    'codprod': " + itemProducao.getCodigoProduto().toString() + ",");
-            json.append("    'controle': ' ',");
-            json.append("    'atributo': 'TAMLOTE',");
-            json.append("    'valor': " + itemProducao.getTamanhoLote().toString());
-            json.append("  }");
-            json.append("}");
-
-            sctx.setRequestBody(Json2XMLParser.jsonToElement("root", new JsonParser().parse(json.toString()).getAsJsonObject()));
+            String json = "{" +
+                    " 'params': {" +
+                    "    'nulop': " + nulop + "," +
+                    "    'seqop': 1," +
+                    "    'codprod': " + itemProducao.getCodigoProduto().toString() + "," +
+                    "    'controle': ' '," +
+                    "    'atributo': 'TAMLOTE'," +
+                    "    'valor': " + itemProducao.getTamanhoLote().toString() +
+                    "  }" +
+                    "}";
+            sctx.setRequestBody(Json2XMLParser.jsonToElement("root", new JsonParser().parse(json).getAsJsonObject()));
             lancamentoOrdemProducaoSP.alterarAtributoProduto(sctx);
 
             return true;
@@ -165,24 +161,22 @@ public class OrdemProducao {
         RetornoLancamentoOrdemProducao retorno = new RetornoLancamentoOrdemProducao();
 
         try {
-            StringBuilder json = new StringBuilder();
-            json.append("{");
-            json.append(" 'params': {");
-            json.append("    'nulop': " + nulop + ",");
-            json.append("    'ignorarWarnings': 'N'");
-            json.append("  }");
-            json.append("}");
-
-            sctx.setRequestBody(Json2XMLParser.jsonToElement("root", new JsonParser().parse(json.toString()).getAsJsonObject()));
+            String json = "{" +
+                    " 'params': {" +
+                    "    'nulop': " + nulop + "," +
+                    "    'ignorarWarnings': 'N'" +
+                    "  }" +
+                    "}";
+            sctx.setRequestBody(Json2XMLParser.jsonToElement("root", new JsonParser().parse(json).getAsJsonObject()));
             lancamentoOrdemProducaoSP.lancarOrdensDeProducao(sctx);
 
-            List<Element> elements =  sctx.getBodyElement().getContent();
+            List elements =  sctx.getBodyElement().getContent();
 
             retorno.setNulop(nulop);
 
-            for (Element element: elements) {
-                if ("ordens".equals(element.getName())) {
-                    retorno.setNumeroOrdem(((Content) element.getContent().get(0)).getValue());
+            for (Object element: elements) {
+                if ("ordens".equals(((Element) element).getName())) {
+                    retorno.setNumeroOrdem(((Content) ((Element) element).getContent().get(0)).getValue());
                 }
             }
         } catch (Exception e) {

@@ -10,7 +10,7 @@ import br.com.sankhya.extensions.actionbutton.Registro;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.StringJoiner;
 
 public class OrdemProducaoAcao implements AcaoRotinaJava {
 
@@ -26,7 +26,12 @@ public class OrdemProducaoAcao implements AcaoRotinaJava {
 			listaItens.add(new ViewProducaoSaldoItem(registro));
 		}
 
-		ctx.confirmar("Gerar Produ\u00e7\u00e3o", "Deseja gerar a produção dos iten(s) [" + listaItens.stream().map(item -> item.getTzaNuItem()).collect(Collectors.joining(",")) + "] ?", 1);
+		StringJoiner joiner = new StringJoiner(",");
+		for (ViewProducaoSaldoItem item : listaItens) {
+			String tzaNuItem = item.getTzaNuItem();
+			joiner.add(tzaNuItem);
+		}
+		ctx.confirmar("Gerar Produ\u00e7\u00e3o", "Deseja gerar a produção dos iten(s) [" + joiner.toString() + "] ?", 1);
 		this.processarProducao(ctx, listaItens);
 	}
 
@@ -62,13 +67,17 @@ public class OrdemProducaoAcao implements AcaoRotinaJava {
 	}
 
 	private void exibirMsgOp(ContextoAcao ctx, List<RetornoLancamentoOrdemProducao> listaRetorno) {
-		StringBuffer mensagem = new StringBuffer();
-		mensagem.append("Ordem(ns) de Produ\u00e7\u00e3o nº: ");
-		mensagem.append("<b>[");
-		mensagem.append(listaRetorno.stream().map(ret -> ret.getNumeroOrdem()).collect(Collectors.joining(",")));
-		mensagem.append("]</b>");
-		mensagem.append(" gerada com sucesso!");
 
-		ctx.setMensagemRetorno(mensagem.toString());
+		StringJoiner joiner = new StringJoiner(",");
+		for (RetornoLancamentoOrdemProducao ret : listaRetorno) {
+			String numeroOrdem = ret.getNumeroOrdem();
+			joiner.add(numeroOrdem);
+		}
+		String mensagem = "Ordem(ns) de Produ\u00e7\u00e3o nº: " +
+				"<b>[" +
+				joiner.toString() +
+				"]</b>" +
+				" gerada com sucesso!";
+		ctx.setMensagemRetorno(mensagem);
 	}
 }
