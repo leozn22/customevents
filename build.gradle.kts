@@ -40,15 +40,21 @@ repositories {
     }
 }
 
+extensions.findByName("buildScan")?.withGroovyBuilder {
+    setProperty("termsOfServiceUrl", "https://gradle.com/terms-of-service")
+    setProperty("termsOfServiceAgree", "yes")
+}
+
 dependencies {
+    implementation("org.jboss.spec.javax.ejb", "jboss-ejb-api_3.2_spec", "1.0.1.Final")
 
     implementation("br.com.lughconsultoria", "lugh-lib", lughlibVersion)
     implementation("br.com.lughconsultoria", "lugh-lib-annotation", lughlibVersion)
     annotationProcessor("br.com.lughconsultoria", "lugh-lib-processor", lughlibVersion)
 
-    implementation("br.com.sankhya.mgecomercial:snkmgecommodel:1.0")
     implementation("br.com.sankhya.extensions:snkwext:1.0")
 
+    implementation("org.jdom", "jdom", "1.1.3")
     implementation("br.com.sankhya", "mge-modelcore", skwVersion)
     implementation("org.apache.commons", "commons-lang3", "3.0")
     implementation("br.com.sankhya", "jape", skwVersion)
