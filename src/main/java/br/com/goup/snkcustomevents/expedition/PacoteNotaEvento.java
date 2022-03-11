@@ -102,6 +102,35 @@ public class PacoteNotaEvento extends SnkIntegrationsApi implements EventoProgra
         return retorno;
     }
 
+    private Boolean isNotaReferenteItem(PersistenceEvent persistenceEvent) {
+        DynamicVO cabecalhoNotaVo = (DynamicVO) persistenceEvent.getVo();
+
+        JdbcWrapper jdbc = persistenceEvent.getJdbcWrapper();
+        NativeSql sql = new NativeSql(jdbc);
+
+        StringBuffer consulta = new StringBuffer();
+        consulta.append("SELECT * FROM ");
+        consulta.append("( ");
+        consulta.append("select 'NFE' AS TIPO, NUNOTAREMESSA AS NUNOTA FROM AD_TGFFINSAL ");
+        consulta.append("where NUNOTAREMESSA = :NUNOTA ");
+        consulta.append("UNION ");
+        consulta.append("select 'NFSE' AS TIPO, NUNOTASERVICO AS NUNOTA FROM AD_TGFFINSAL ");
+        consulta.append("where NUNOTASERVICO = :NUNOTA ");
+        consulta.append(") TIPO_NOTA ");
+        consulta.append("WHERE ROWNUM = 1 ");
+
+        try {
+            sql.setNamedParameter("NUNOTA", cabecalhoNotaVo.asBigDecimal("NUNOTA").intValue());
+            ResultSet result = sql.executeQuery(consulta.toString());
+
+            return result.next();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
     private void sincronizarNota(PersistenceEvent persistenceEvent) throws Exception {
 
         DynamicVO pacoteVo = (DynamicVO) persistenceEvent.getVo();
@@ -110,8 +139,6 @@ public class PacoteNotaEvento extends SnkIntegrationsApi implements EventoProgra
         String statusNfSe = pacoteVo.asString("STATUSNFSE");
 
         //boolean enviou_dados_zap = JapeSession.getPropertyAsBoolean("enviou_dados_nota_zap", false);
-
-        this.retornaDadosPacote(persistenceEvent);
 
         if ("D".equals(statusNfe) || "A".equals(statusNfe) || "A".equals(statusNfSe)){
             PacoteNota pacoteNota = this.retornaDadosPacote(persistenceEvent);
@@ -128,6 +155,14 @@ public class PacoteNotaEvento extends SnkIntegrationsApi implements EventoProgra
                         String url = this.urlApi + "/v2/snk/pacotes/notas?assincrono=true";
 
                         this.enviarDados("PUT", url, json);
+                    });
+                }
+            } else {
+                //Nota é referente a algum item da Zap
+                if (this.isNotaReferenteItem(persistenceEvent)) {
+                    PerformanceMonitor.INSTANCE.measureJava("integracaoPacoteZap", () -> {
+                        String url = this.urlApi + "/v2/snk/notasfiscais/importarnotaoraclesqlserver/" + pacoteVo.asBigDecimal("NUNOTA").intValue() + "?assincrono=true";
+                        this.enviarDados("POST", url, "");
                     });
                 }
             }
