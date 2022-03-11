@@ -1,10 +1,11 @@
 package br.com.goup.snkcustomevents.expedition;
 
+import br.com.goup.snkcustomevents.Enumerator.IdTipoOperacaoPedidoVenda;
+import br.com.goup.snkcustomevents.Enumerator.TipoEntrega;
 import br.com.goup.snkcustomevents.SnkIntegrationsApi;
 import br.com.goup.snkcustomevents.utils.IntegrationApi;
 import br.com.lugh.performance.PerformanceMonitor;
 import br.com.sankhya.extensions.eventoprogramavel.EventoProgramavelJava;
-import br.com.sankhya.jape.core.JapeSession;
 import br.com.sankhya.jape.dao.JdbcWrapper;
 import br.com.sankhya.jape.event.PersistenceEvent;
 import br.com.sankhya.jape.event.TransactionContext;
@@ -13,7 +14,6 @@ import br.com.sankhya.jape.vo.DynamicVO;
 import br.com.sankhya.jape.wrapper.JapeFactory;
 import br.com.sankhya.jape.wrapper.JapeWrapper;
 import br.com.sankhya.modelcore.auth.AuthenticationInfo;
-import br.com.sankhya.modelcore.util.DynamicEntityNames;
 import com.google.gson.Gson;
 
 import java.sql.ResultSet;
@@ -28,7 +28,7 @@ public class PacoteNotaEvento extends SnkIntegrationsApi implements EventoProgra
         this.forceUrl("AllTest"); // Opções: LocalTest, ProductionTest, AllTest, Production
     }
 
-    private void enviarDados(String verboHttp, String url, String json) throws Exception {
+    private void enviarDados(String verboHttp, String url, String json) {
         this.qtdException++;
         try {
             String token = IntegrationApi.getToken(this.urlApi + "/oauth/token?grant_type=client_credentials", "POST", "Basic c2Fua2h5YXc6U0Bua2h5QDJV");
@@ -41,7 +41,7 @@ public class PacoteNotaEvento extends SnkIntegrationsApi implements EventoProgra
         this.qtdException = 0;
     }
 
-    private void atualizaInformacaoPacoteDenegada(PacoteNota pacoteNota) throws Exception {
+    private void atualizaInformacaoPacoteDenegada(PacoteNota pacoteNota)  {
         if (pacoteNota.getNuPct() <= 0) {
             return;
         }
@@ -70,7 +70,7 @@ public class PacoteNotaEvento extends SnkIntegrationsApi implements EventoProgra
         JdbcWrapper jdbc = persistenceEvent.getJdbcWrapper();
         NativeSql sql = new NativeSql(jdbc);
 
-        StringBuffer consulta = new StringBuffer();
+        StringBuilder consulta = new StringBuilder();
         consulta.append("SELECT * FROM ");
         consulta.append("( ");
         consulta.append("select 'NFE' AS TIPO, NUPCT, NUNOTAREMESSA AS NUNOTA FROM TZAPCT_TGFCAB ");
@@ -108,7 +108,7 @@ public class PacoteNotaEvento extends SnkIntegrationsApi implements EventoProgra
         JdbcWrapper jdbc = persistenceEvent.getJdbcWrapper();
         NativeSql sql = new NativeSql(jdbc);
 
-        StringBuffer consulta = new StringBuffer();
+        StringBuilder consulta = new StringBuilder();
         consulta.append("SELECT * FROM ");
         consulta.append("( ");
         consulta.append("select 'NFE' AS TIPO, NUNOTAREMESSA AS NUNOTA FROM AD_TGFFINSAL ");
@@ -169,9 +169,34 @@ public class PacoteNotaEvento extends SnkIntegrationsApi implements EventoProgra
         }
     }
 
+    private void verificaTipoEntrega(PersistenceEvent persistenceEvent) throws Exception {
+        DynamicVO cabecalhoVO = (DynamicVO) persistenceEvent.getVo();
+
+        if (cabecalhoVO.asInt("CODTIPOPER") == IdTipoOperacaoPedidoVenda.TOP_NF_SIMPLES_REMESSA.getValue() &&
+                cabecalhoVO.asInt("TZACODTET") > 0 && cabecalhoVO.asInt("CODCONTATOENTREGA") > 0 ) {
+
+            JapeWrapper tipoEntregaDAO;
+            try {
+                tipoEntregaDAO = JapeFactory.dao("TxpZapTipoEntrega");
+            } catch (Exception e) {
+                throw new Exception("Instancia Tipo de Entrega");
+            }
+
+            DynamicVO tipoEntregaVO = tipoEntregaDAO.findByPK(cabecalhoVO.asInt("TZACODTET"));
+
+            if (tipoEntregaVO != null) {
+                if (tipoEntregaVO.asString("TIPO") != null && !TipoEntrega.PORTA_A_PORTA.getValue().equals(tipoEntregaVO.asString("TIPO"))) {
+                    cabecalhoVO.setProperty("CODCONTATOENTREGA", null);
+                }
+            }
+        }
+    }
+
     @Override
     public void beforeInsert(PersistenceEvent persistenceEvent) throws Exception {
-
+        if (AuthenticationInfo.getCurrent().getUserID().intValue() != 139) {
+            this.verificaTipoEntrega(persistenceEvent);
+        }
     }
 
     @Override
