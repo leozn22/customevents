@@ -77,10 +77,11 @@ dependencies {
 group = "br.com.goup.snkintegrations"
 version = "1.0.31-SNAPSHOT"
 description = "Sankhya Custom Events Programmer"
-java.sourceCompatibility = JavaVersion.VERSION_1_8
 
-tasks.compileJava {
-    options.release.set(8)
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(8))
+    }
 }
 
 publishing {
