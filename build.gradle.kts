@@ -79,6 +79,10 @@ version = "1.0.31-SNAPSHOT"
 description = "Sankhya Custom Events Programmer"
 java.sourceCompatibility = JavaVersion.VERSION_1_8
 
+tasks.compileJava {
+    options.release.set(8)
+}
+
 publishing {
     publications.create<MavenPublication>("maven") {
         from(components["java"])
