@@ -41,7 +41,7 @@ public class PacoteNotaEvento extends SnkIntegrationsApi implements EventoProgra
         this.qtdException = 0;
     }
 
-    private void atualizaInformacaoPacoteDenegada(PacoteNota pacoteNota)  {
+    private void atualizaInformacaoPacoteDenegada(PacoteNota pacoteNota) {
         if (pacoteNota.getNuPct() <= 0) {
             return;
         }
@@ -69,25 +69,22 @@ public class PacoteNotaEvento extends SnkIntegrationsApi implements EventoProgra
 
         JdbcWrapper jdbc = persistenceEvent.getJdbcWrapper();
         NativeSql sql = new NativeSql(jdbc);
-
-        StringBuilder consulta = new StringBuilder();
-        consulta.append("SELECT * FROM ");
-        consulta.append("( ");
-        consulta.append("select 'NFE' AS TIPO, NUPCT, NUNOTAREMESSA AS NUNOTA FROM TZAPCT_TGFCAB ");
-        consulta.append("where NUNOTAREMESSA = :NUNOTA ");
-        consulta.append("UNION ");
-        consulta.append("select 'NFSE' AS TIPO, NUPCT, NUNOTASERVICO AS NUNOTA FROM TZAPCT_TGFCAB ");
-        consulta.append("where NUNOTASERVICO = :NUNOTA ");
-        consulta.append("UNION ");
-        consulta.append("select 'CTE' AS TIPO, NUPCT, NUNOTACTE AS NUNOTA FROM TZAPCT_TGFCAB ");
-        consulta.append("where NUNOTACTE = :NUNOTA ");
-        consulta.append(") TIPO_NOTA ");
-        consulta.append("WHERE ROWNUM = 1 ");
-        consulta.append("ORDER BY TIPO_NOTA.NUPCT DESC ");
+        sql.appendSql("SELECT * FROM ( " +
+                "select 'NFE' AS TIPO, NUPCT, NUNOTAREMESSA AS NUNOTA FROM TZAPCT_TGFCAB " +
+                "where NUNOTAREMESSA = :NUNOTA " +
+                "UNION " +
+                "select 'NFSE' AS TIPO, NUPCT, NUNOTASERVICO AS NUNOTA FROM TZAPCT_TGFCAB " +
+                "where NUNOTASERVICO = :NUNOTA " +
+                "UNION " +
+                "select 'CTE' AS TIPO, NUPCT, NUNOTACTE AS NUNOTA FROM TZAPCT_TGFCAB " +
+                "where NUNOTACTE = :NUNOTA " +
+                ") TIPO_NOTA " +
+                "WHERE ROWNUM = 1 " +
+                "ORDER BY TIPO_NOTA.NUPCT DESC ");
 
         try {
             sql.setNamedParameter("NUNOTA", cabecalhoNotaVo.asBigDecimal("NUNOTA").intValue());
-            ResultSet result = sql.executeQuery(consulta.toString());
+            ResultSet result = sql.executeQuery();
 
             if (result.next()) {
                 retorno.setNuPct(result.getBigDecimal("NUPCT").intValue());
@@ -108,21 +105,18 @@ public class PacoteNotaEvento extends SnkIntegrationsApi implements EventoProgra
         JdbcWrapper jdbc = persistenceEvent.getJdbcWrapper();
         NativeSql sql = new NativeSql(jdbc);
 
-        StringBuilder consulta = new StringBuilder();
-        consulta.append("SELECT * FROM ");
-        consulta.append("( ");
-        consulta.append("select 'NFE' AS TIPO, NUNOTAREMESSA AS NUNOTA FROM AD_TGFFINSAL ");
-        consulta.append("where NUNOTAREMESSA = :NUNOTA ");
-        consulta.append("UNION ");
-        consulta.append("select 'NFSE' AS TIPO, NUNOTASERVICO AS NUNOTA FROM AD_TGFFINSAL ");
-        consulta.append("where NUNOTASERVICO = :NUNOTA ");
-        consulta.append(") TIPO_NOTA ");
-        consulta.append("WHERE ROWNUM = 1 ");
+        sql.appendSql("SELECT * FROM ( " +
+                "select 'NFE' AS TIPO, NUNOTAREMESSA AS NUNOTA FROM AD_TGFFINSAL " +
+                "where NUNOTAREMESSA = :NUNOTA " +
+                "UNION " +
+                "select 'NFSE' AS TIPO, NUNOTASERVICO AS NUNOTA FROM AD_TGFFINSAL " +
+                "where NUNOTASERVICO = :NUNOTA " +
+                ") TIPO_NOTA " +
+                "WHERE ROWNUM = 1 ");
 
         try {
             sql.setNamedParameter("NUNOTA", cabecalhoNotaVo.asBigDecimal("NUNOTA").intValue());
-            ResultSet result = sql.executeQuery(consulta.toString());
-
+            ResultSet result = sql.executeQuery();
             return result.next();
         } catch (Exception e) {
             e.printStackTrace();
