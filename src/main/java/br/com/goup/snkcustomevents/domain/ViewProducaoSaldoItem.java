@@ -1,5 +1,6 @@
 package br.com.goup.snkcustomevents.domain;
 
+import br.com.sankhya.extensions.actionbutton.QueryExecutor;
 import br.com.sankhya.extensions.actionbutton.Registro;
 
 import java.math.BigDecimal;
@@ -29,7 +30,7 @@ public class ViewProducaoSaldoItem {
     }
 
     public ViewProducaoSaldoItem(Registro registro) {
-        this.codigoEmpresa = new BigDecimal(registro.getCampo("TZANUITEM").toString());
+        this.codigoEmpresa = new BigDecimal(registro.getCampo("CODEMP").toString());
         this.nomeProduto = registro.getCampo("NOMEPROD").toString();
         this.tzaCodProd =  new BigDecimal(registro.getCampo("TZACODPROD").toString());
         this.tzaNuItem = registro.getCampo("TZANUITEM").toString();
@@ -38,6 +39,18 @@ public class ViewProducaoSaldoItem {
         this.tzaStatusPg = registro.getCampo("TZASTATUSPG").toString();
         this.codigoPlanta =  new BigDecimal(registro.getCampo("CODIGOPLAN").toString());
         this.quantidade =  new BigDecimal(registro.getCampo("QTDNEG").toString());
+    }
+
+    public ViewProducaoSaldoItem(QueryExecutor qry) throws Exception {
+        this.codigoEmpresa = qry.getBigDecimal("CODEMP");
+        this.nomeProduto = qry.getString("NOMEPROD");
+        this.tzaCodProd = qry.getBigDecimal("TZACODPROD");
+        this.tzaNuItem = qry.getString("TZANUITEM");
+        this.tzaNumNota = qry.getBigDecimal("TZANUMNOTA");
+        this.tzaStatusItem = qry.getString("TZASTATUSITEM");
+        this.tzaStatusPg = qry.getString("TZASTATUSPG");
+        this.codigoPlanta = qry.getBigDecimal("CODIGOPLAN");
+        this.quantidade = qry.getBigDecimal("QTDNEG");
     }
 
     public BigDecimal getCodigoEmpresa() {

@@ -14,8 +14,12 @@ import java.util.StringJoiner;
 
 public class OrdemProducaoAcao implements AcaoRotinaJava {
 
+	private ContextoAcao contextoAcao;
+
 	@Override
 	public void doAction(ContextoAcao ctx) throws Exception {
+		this.contextoAcao = ctx;
+
 		if (ctx.getLinhas() == null || ctx.getLinhas().length == 0) {
 			ctx.mostraErro("Registro n\u00e3o selecionado!");	
 		}
@@ -32,10 +36,10 @@ public class OrdemProducaoAcao implements AcaoRotinaJava {
 			joiner.add(tzaNuItem);
 		}
 		ctx.confirmar("Gerar Produ\u00e7\u00e3o", "Deseja gerar a produção dos iten(s) [" + joiner.toString() + "] ?", 1);
-		this.processarProducao(ctx, listaItens);
+		this.processarProducao(listaItens);
 	}
 
-	private void processarProducao(ContextoAcao ctx, List<ViewProducaoSaldoItem> listaItens) throws Exception {
+	private void processarProducao(List<ViewProducaoSaldoItem> listaItens) throws Exception {
 		List<ItemProducao> listaItemProducao = new ArrayList<>();
 
 		for(ViewProducaoSaldoItem saldoItem: listaItens) {
@@ -55,7 +59,7 @@ public class OrdemProducaoAcao implements AcaoRotinaJava {
 			}
 		}
 
-		OrdemProducao ordemProducao = new OrdemProducao(ctx);
+		OrdemProducao ordemProducao = new OrdemProducao(contextoAcao);
 		List<RetornoLancamentoOrdemProducao> listaRetorno = new ArrayList<>();
 
 		for (ItemProducao itemProducao: listaItemProducao) {
@@ -63,21 +67,38 @@ public class OrdemProducaoAcao implements AcaoRotinaJava {
 			listaRetorno.add(retorno);
 		}
 
-		this.exibirMsgOp(ctx, listaRetorno);
+		this.exibirMsg(listaRetorno);
 	}
 
-	private void exibirMsgOp(ContextoAcao ctx, List<RetornoLancamentoOrdemProducao> listaRetorno) {
-
-		StringJoiner joiner = new StringJoiner(",");
+	public void exibirMsg(List<RetornoLancamentoOrdemProducao> listaRetorno) {
+		StringJoiner listaOpSucesso = new StringJoiner(",");
+		StringJoiner listaFalhaNulop = new StringJoiner(",");
 		for (RetornoLancamentoOrdemProducao ret : listaRetorno) {
-			String numeroOrdem = ret.getNumeroOrdem();
-			joiner.add(numeroOrdem);
+			if (ret.isSucesso()) {
+				listaOpSucesso.add(ret.getNumeroOrdem());
+			} else {
+				listaFalhaNulop.add(ret.getMsg());
+			}
 		}
-		String mensagem = "Ordem(ns) de Produ\u00e7\u00e3o nº: " +
-				"<b>[" +
-				joiner.toString() +
-				"]</b>" +
-				" gerada com sucesso!";
-		ctx.setMensagemRetorno(mensagem);
+
+		String msg = "";
+
+		if (listaOpSucesso.length() > 0) {
+			msg = "Ordem(ns) de Produ\u00e7\u00e3o nº: " +
+					"<b>[" +
+					listaOpSucesso.toString() +
+					"]</b>" +
+					" gerada com sucesso!";
+		}
+
+		if (listaFalhaNulop.length() > 0) {
+			msg += "<br>Falha ao gerar OP: " + listaFalhaNulop.toString();
+		}
+
+		if (msg.equals("")) {
+			msg = "Falha ao gerar OP erro não catalogado";
+		}
+
+		contextoAcao.setMensagemRetorno(msg);
 	}
 }

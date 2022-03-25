@@ -12,6 +12,8 @@ public class ItemProducao {
 
     private int tamanhoLote;
 
+    private int numeroGrade;
+
     private List<ViewProducaoSaldoItem> listaSaldoItem;
 
     public ItemProducao() {
@@ -40,6 +42,14 @@ public class ItemProducao {
 
     public void setTamanhoLote(int tamanhoLote) {
         this.tamanhoLote = tamanhoLote;
+    }
+
+    public int getNumeroGrade() {
+        return numeroGrade;
+    }
+
+    public void setNumeroGrade(int numeroGrade) {
+        this.numeroGrade = numeroGrade;
     }
 
     public List<ViewProducaoSaldoItem> getListaSaldoItem() {
