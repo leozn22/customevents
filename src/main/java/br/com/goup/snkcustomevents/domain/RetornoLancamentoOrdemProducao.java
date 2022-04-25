@@ -1,18 +1,21 @@
 package br.com.goup.snkcustomevents.domain;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 public class RetornoLancamentoOrdemProducao {
     private boolean sucesso;
 
     private String msg;
 
-    private String numeroOrdem;
+    private List<String> listaNumeroOrdem;
 
     private BigDecimal nulop;
 
     public RetornoLancamentoOrdemProducao() {
         this.sucesso = true;
+        listaNumeroOrdem = new ArrayList<>();
     }
 
     public RetornoLancamentoOrdemProducao(Boolean sucesso) {
@@ -35,12 +38,12 @@ public class RetornoLancamentoOrdemProducao {
         this.msg = msg;
     }
 
-    public String getNumeroOrdem() {
-        return numeroOrdem;
+    public List<String> getListaNumeroOrdem() {
+        return listaNumeroOrdem;
     }
 
-    public void setNumeroOrdem(String numeroOrdem) {
-        this.numeroOrdem = numeroOrdem;
+    public void setListaNumeroOrdem(List<String> listaNumeroOrdem) {
+        this.listaNumeroOrdem = listaNumeroOrdem;
     }
 
     public BigDecimal getNulop() {

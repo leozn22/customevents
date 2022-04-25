@@ -10,9 +10,11 @@ public class ItemProducao {
 
     private BigDecimal codigoProduto;
 
-    private int tamanhoLote;
+    private BigDecimal tamanhoLote;
 
     private int numeroGrade;
+
+    private BigDecimal idiProc;
 
     private List<ViewProducaoSaldoItem> listaSaldoItem;
 
@@ -36,11 +38,11 @@ public class ItemProducao {
         this.codigoProduto = codigoProduto;
     }
 
-    public Integer getTamanhoLote() {
+    public BigDecimal getTamanhoLote() {
         return tamanhoLote;
     }
 
-    public void setTamanhoLote(int tamanhoLote) {
+    public void setTamanhoLote(BigDecimal tamanhoLote) {
         this.tamanhoLote = tamanhoLote;
     }
 
@@ -54,5 +56,13 @@ public class ItemProducao {
 
     public List<ViewProducaoSaldoItem> getListaSaldoItem() {
         return listaSaldoItem;
+    }
+
+    public BigDecimal getIdiProc() {
+        return idiProc;
+    }
+
+    public void setIdiProc(BigDecimal idiProc) {
+        this.idiProc = idiProc;
     }
 }

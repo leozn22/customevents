@@ -1,4 +1,4 @@
-package br.com.goup.snkcustomevents.orders;
+package br.com.goup.snkcustomevents.production;
 
 import br.com.goup.snkcustomevents.domain.RetornoLancamentoOrdemProducao;
 import br.com.sankhya.extensions.actionbutton.AcaoRotinaJava;
@@ -48,11 +48,8 @@ public class OrdemProducaoGradeAcao  implements AcaoRotinaJava {
 
         if (retorno.isSucesso()) {
             mensagem = "Ordem(ns) de Produ\u00e7\u00e3o nº: " +
-                    "<b>[" +
-                    retorno.getNumeroOrdem() +
-                    "]</b>" +
+                    "<b>[" + String.join(",", retorno.getListaNumeroOrdem()) + "]</b>" +
                     " gerada com sucesso!";
-
         }
 
         contextoAcao.setMensagemRetorno(mensagem);
