@@ -45,46 +45,81 @@ public class OrdemProducao {
         return this.processoProducao(itemProducao);
     }
 
-    public RetornoLancamentoOrdemProducao processoProducaoListagrade(List<String> listaGrade) {
-        RetornoLancamentoOrdemProducao retorno = new RetornoLancamentoOrdemProducao();
+    public RetornoLancamentoOrdemProducao processoProducao(ItemProducao itemProducao) {
+        RetornoLancamentoOrdemProducao retorno;
 
-        BigDecimal nulop;
         try {
-            nulop = this.getNuLop();
-
-            List<ItemProducao> listaItemProducao = this.carregarItemProducaoGrade(listaGrade);
-
-            for (ItemProducao item: listaItemProducao) {
-                int idProcesso = this.buscarIdProcessoProduto(nulop, item);
-                this.inserirProdutoHTML5(nulop, idProcesso, item);
-                this.alterarAtributoProduto(nulop, item);
-            }
-
-            retorno = this.lancarOrdensDeProducao(nulop);
-
-            if (retorno.isSucesso()) {
-                for (String idiProc : retorno.getListaNumeroOrdem()) {
-                    carrregarIdiProc(listaItemProducao, idiProc);
-                }
-
-                this.atualizarNulop(retorno, nulop);
-
-                for (ItemProducao item: listaItemProducao) {
-                    this.atualizarClienteSaldo(nulop, item.getIdiProc(), item.getListaSaldoItem());
-
-                    if (item.getNumeroGrade() > 0) {
-                        this.atualizarTabelaGradeOP(item, item.getIdiProc(), nulop);
-                    }
-                }
-            }
+            List<ItemProducao> listaItemProducao = new ArrayList<>();
+            listaItemProducao.add(itemProducao);
+            retorno = this.realizarLancamento(listaItemProducao);
         } catch (Exception e) {
             e.printStackTrace();
-
-            retorno.setSucesso(false);
-            retorno.setMsg("Erro: " + e.getMessage());
+            retorno = new RetornoLancamentoOrdemProducao(false, "Erro: " + e.getMessage());
         }
 
         return retorno;
+    }
+
+    public RetornoLancamentoOrdemProducao processoProducaoListaGrade(List<String> listaGrade) {
+        RetornoLancamentoOrdemProducao retorno;
+
+        try {
+            List<ItemProducao> listaItemProducao = this.carregarItemProducaoGrade(listaGrade);
+            retorno = this.realizarLancamento(listaItemProducao);
+        } catch (Exception e) {
+            e.printStackTrace();
+            retorno = new RetornoLancamentoOrdemProducao(false, "Erro: " + e.getMessage());
+        }
+
+        return retorno;
+    }
+
+    public int quantidadeItensGrade(Integer numeroGrade) {
+        try {
+            QueryExecutor qryGrade = contextoAcao.getQuery();
+            qryGrade.setParam("CODGRADE", numeroGrade);
+            qryGrade.nativeSelect("SELECT COUNT(*) QTD FROM AD_TGFFINSAL at2 WHERE CODGRADE = {CODGRADE}");
+
+            if (qryGrade.next()) {
+                return qryGrade.getInt("QTD");
+            }
+
+            qryGrade.close();
+
+            return 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return 0;
+        }
+    }
+
+    private RetornoLancamentoOrdemProducao realizarLancamento(List<ItemProducao> listaItemProducao) throws Exception {
+        BigDecimal nulop = this.getNuLop();
+
+        for (ItemProducao item: listaItemProducao) {
+            int idProcesso = this.buscarIdProcessoProduto(nulop, item);
+            this.inserirProdutoHTML5(nulop, idProcesso, item);
+            this.alterarAtributoProduto(nulop, item);
+        }
+
+        RetornoLancamentoOrdemProducao retorno = this.lancarOrdensDeProducao(nulop);
+        this.gravaRetornoLancamento(retorno, nulop, listaItemProducao);
+        return retorno;
+    }
+
+    private void gravaRetornoLancamento(RetornoLancamentoOrdemProducao retorno, BigDecimal nulop, List<ItemProducao> listaItemProducao) throws Exception {
+        if (retorno.isSucesso()) {
+            for (String idiProc : retorno.getListaNumeroOrdem()) {
+                carrregarIdiProc(listaItemProducao, idiProc);
+            }
+
+            this.atualizarNulop(retorno, nulop);
+
+            for (ItemProducao item: listaItemProducao) {
+                this.atualizarClienteSaldo(nulop, item.getIdiProc(), item.getListaSaldoItem());
+                this.atualizarTabelaGradeOP(item, item.getIdiProc());
+            }
+        }
     }
 
     private void atualizarNulop(RetornoLancamentoOrdemProducao retorno, BigDecimal nulop) throws Exception {
@@ -117,64 +152,6 @@ public class OrdemProducao {
         }
     }
 
-    public RetornoLancamentoOrdemProducao processoProducao(ItemProducao itemProducao) {
-        RetornoLancamentoOrdemProducao retorno = new RetornoLancamentoOrdemProducao();
-
-        BigDecimal nulop;
-        try {
-            nulop = this.getNuLop();
-
-            int idProcesso = this.buscarIdProcessoProduto(nulop, itemProducao);
-            this.inserirProdutoHTML5(nulop, idProcesso, itemProducao);
-            this.alterarAtributoProduto(nulop, itemProducao);
-            retorno = this.lancarOrdensDeProducao(nulop);
-
-            if (retorno.isSucesso()) {
-                BigDecimal idiproc;
-                try {
-                    idiproc = retorno.getListaNumeroOrdem().size() > 0 ? new BigDecimal(retorno.getListaNumeroOrdem().get(0)) : BigDecimal.ZERO;
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    idiproc = BigDecimal.ZERO;
-                }
-
-                this.atualizarNulop(retorno, nulop);
-
-                this.atualizarClienteSaldo(nulop, idiproc, itemProducao.getListaSaldoItem());
-
-                if (itemProducao.getNumeroGrade() > 0) {
-                    this.atualizarTabelaGradeOP(itemProducao, idiproc, nulop);
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-
-            retorno.setSucesso(false);
-            retorno.setMsg("Erro: " + e.getMessage());
-        }
-
-        return retorno;
-    }
-
-    public int quantidadeItensGrade(Integer numeroGrade) {
-        try {
-            QueryExecutor qryGrade = contextoAcao.getQuery();
-            qryGrade.setParam("CODGRADE", numeroGrade);
-            qryGrade.nativeSelect("SELECT COUNT(*) QTD FROM AD_TGFFINSAL at2 WHERE CODGRADE = {CODGRADE}");
-
-            if (qryGrade.next()) {
-                return qryGrade.getInt("QTD");
-            }
-
-            qryGrade.close();
-
-            return 0;
-        } catch (Exception e) {
-            e.printStackTrace();
-            return 0;
-        }
-    }
-
     private ItemProducao carregarItemProducaoGrade(Integer numeroGrade, Integer processoZap) throws Exception {
         ItemProducao itemProducao = new ItemProducao();
 
@@ -188,7 +165,7 @@ public class OrdemProducao {
                     itemProducao.setCodigoPlanta(qryConfiguracao.getInt("CODPLP"));
                     itemProducao.setCodigoProduto(BigDecimal.valueOf(qryConfiguracao.getInt("CODPROD")));
                     itemProducao.setTamanhoLote(qryConfiguracao.getBigDecimal("TAMLOTE"));
-                    itemProducao.setNumeroGrade(numeroGrade);
+                    itemProducao.getListaGrade().add(numeroGrade);
                 } catch (Exception e) {
                     throw new Exception("Falha ao carregar algum campo do processo [" + processoZap + "] !");
                 }
@@ -220,48 +197,47 @@ public class OrdemProducao {
     private List<ItemProducao> carregarItemProducaoGrade(List<String> listaGrade) throws Exception {
         List<ItemProducao> retorno = new ArrayList<>();
 
-        for (String codigoGradeStr: listaGrade) {
-            QueryExecutor qryListaProducao = contextoAcao.getQuery();
-            try {
-                qryListaProducao.setParam("P_CODGRADE", Integer.valueOf(codigoGradeStr));
-                qryListaProducao.nativeSelect("SELECT CODGRADE, CODPROD, TRUNC((sum(QTDNEG * (LARGURA  * COMPRIMENTO )) / 1000000),2) AREA " +
-                        "FROM AD_TGFFINSAL at2 WHERE CODGRADE = {P_CODGRADE} " +
-                        "GROUP BY CODGRADE, CODPROD");
+        QueryExecutor qryListaProducao = contextoAcao.getQuery();
+        try {
+            qryListaProducao.nativeSelect("SELECT CODPROD, TRUNC((sum(QTDNEG * (LARGURA  * COMPRIMENTO )) / 1000000),2) AREA " +
+                    "FROM AD_TGFFINSAL at2 WHERE CODGRADE in (" + String.join(",", listaGrade) + ") " +
+                    "GROUP BY CODPROD");
 
-                while(qryListaProducao.next()) {
+            while(qryListaProducao.next()) {
+                try {
+                    ItemProducao itemProducao = new ItemProducao();
+                    itemProducao.setCodigoProduto(BigDecimal.valueOf(qryListaProducao.getInt("CODPROD")));
+                    itemProducao.setCodigoPlanta(5);
+                    itemProducao.setTamanhoLote(qryListaProducao.getBigDecimal("AREA"));
+
+                    QueryExecutor query = contextoAcao.getQuery();
                     try {
-                        ItemProducao itemProducao = new ItemProducao();
-                        itemProducao.setCodigoProduto(BigDecimal.valueOf(qryListaProducao.getInt("CODPROD")));
-                        itemProducao.setCodigoPlanta(5);
-                        itemProducao.setTamanhoLote(qryListaProducao.getBigDecimal("AREA"));
-                        itemProducao.setNumeroGrade(qryListaProducao.getInt("CODGRADE"));
+                        query.setParam("P_CODPROD", qryListaProducao.getInt("CODPROD"));
+                        query.nativeSelect("SELECT 0 AS CODEMP, '' AS NOMEPROD, CODPROD AS TZACODPROD, " +
+                                "ITEM AS TZANUITEM, NUMNOTA AS TZANUMNOTA, STATUSITEM  AS TZASTATUSITEM, " +
+                                "STATUSPG  AS TZASTATUSPG, 5 AS CODIGOPLAN, QTDNEG, CODGRADE " +
+                                "FROM AD_TGFFINSAL SAL " +
+                                "WHERE CODGRADE in ( " + String.join(",", listaGrade) + ") " +
+                                "AND CODPROD = {P_CODPROD}");
 
-                        QueryExecutor query = contextoAcao.getQuery();
-                        try {
-                            query.setParam("P_CODGRADE", qryListaProducao.getInt("CODGRADE"));
-                            query.setParam("P_CODPROD", qryListaProducao.getInt("CODPROD"));
-                            query.nativeSelect("SELECT 0 AS CODEMP, '' AS NOMEPROD, CODPROD AS TZACODPROD, " +
-                                    "ITEM AS TZANUITEM, NUMNOTA AS TZANUMNOTA, STATUSITEM  AS TZASTATUSITEM, " +
-                                    "STATUSPG  AS TZASTATUSPG, 5 AS CODIGOPLAN, QTDNEG " +
-                                    "FROM AD_TGFFINSAL SAL " +
-                                    "WHERE CODGRADE = {P_CODGRADE} " +
-                                    "AND CODPROD = {P_CODPROD}");
+                        while(query.next()){
+                            itemProducao.getListaSaldoItem().add(new ViewProducaoSaldoItem(query));
 
-                            while(query.next()){
-                                itemProducao.getListaSaldoItem().add(new ViewProducaoSaldoItem(query));
+                            if (!itemProducao.getListaGrade().contains(query.getInt("CODGRADE"))) {
+                                itemProducao.getListaGrade().add(query.getInt("CODGRADE"));
                             }
-                        } finally {
-                            query.close();
                         }
-
-                        retorno.add(itemProducao);
-                    } catch (Exception e) {
-                        throw new Exception("Falha ao carregar a lista de itens da grade [" + String.join(",", listaGrade) + "] !");
+                    } finally {
+                        query.close();
                     }
+
+                    retorno.add(itemProducao);
+                } catch (Exception e) {
+                    throw new Exception("Falha ao carregar a lista de itens da grade [" + String.join(",", listaGrade) + "] !");
                 }
-            } finally {
-                qryListaProducao.close();
             }
+        } finally {
+            qryListaProducao.close();
         }
 
         return retorno;
@@ -339,7 +315,7 @@ public class OrdemProducao {
         return false;
     }
 
-    private boolean alterarAtributoProduto(BigDecimal nulop, ItemProducao itemProducao) throws Exception {
+    private boolean alterarAtributoProduto(BigDecimal nulop, ItemProducao itemProducao) {
         try {
             String json = "{" +
                     " 'params': {" +
@@ -393,20 +369,17 @@ public class OrdemProducao {
         return retorno;
     }
 
-    private void atualizarTabelaGradeOP(ItemProducao item, BigDecimal idiproc, BigDecimal nulop) throws Exception {
+    private void atualizarTabelaGradeOP(ItemProducao item, BigDecimal idiproc) throws Exception {
         JapeSession.SessionHandle hnd = null;
         try {
             hnd = JapeSession.open();
-            hnd.execWithTX(new JapeSession.TXBlock() {
-                public void doWithTx() throws Exception {
-
-                    for (ViewProducaoSaldoItem itemSaldoItem : item.getListaSaldoItem()) {
-                        Registro gradeOP = contextoAcao.novaLinha("AD_GRADEOP");
-                        gradeOP.setCampo("IDIPROC", idiproc.intValue());
-                        gradeOP.setCampo("CODGRADE", item.getNumeroGrade());
-                        gradeOP.setCampo("TZANUITEM", itemSaldoItem.getTzaNuItem());
-                        gradeOP.save();
-                    }
+            hnd.execWithTX(() -> {
+                for (ViewProducaoSaldoItem itemSaldoItem : item.getListaSaldoItem()) {
+                    Registro gradeOP = contextoAcao.novaLinha("AD_GRADEOP");
+                    gradeOP.setCampo("IDIPROC", idiproc.intValue());
+                    gradeOP.setCampo("CODGRADE", itemSaldoItem.getNumeroGrade());
+                    gradeOP.setCampo("TZANUITEM", itemSaldoItem.getTzaNuItem());
+                    gradeOP.save();
                 }
             });
         } finally {

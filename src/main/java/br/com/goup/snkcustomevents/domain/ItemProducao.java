@@ -12,7 +12,7 @@ public class ItemProducao {
 
     private BigDecimal tamanhoLote;
 
-    private int numeroGrade;
+    private List<Integer> listaGrade;
 
     private BigDecimal idiProc;
 
@@ -20,6 +20,7 @@ public class ItemProducao {
 
     public ItemProducao() {
         listaSaldoItem = new ArrayList<>();
+        listaGrade = new ArrayList<>();
     }
 
     public Integer getCodigoPlanta() {
@@ -46,12 +47,12 @@ public class ItemProducao {
         this.tamanhoLote = tamanhoLote;
     }
 
-    public int getNumeroGrade() {
-        return numeroGrade;
+    public List<Integer> getListaGrade() {
+        return listaGrade;
     }
 
-    public void setNumeroGrade(int numeroGrade) {
-        this.numeroGrade = numeroGrade;
+    public void setListaGrade(List<Integer> listaNumeroGrade) {
+        this.listaGrade = listaNumeroGrade;
     }
 
     public List<ViewProducaoSaldoItem> getListaSaldoItem() {

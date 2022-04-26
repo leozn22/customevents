@@ -25,6 +25,8 @@ public class ViewProducaoSaldoItem {
 
     private BigDecimal quantidade;
 
+    private BigDecimal numeroGrade;
+
     public ViewProducaoSaldoItem() {
 
     }
@@ -51,6 +53,7 @@ public class ViewProducaoSaldoItem {
         this.tzaStatusPg = qry.getString("TZASTATUSPG");
         this.codigoPlanta = qry.getBigDecimal("CODIGOPLAN");
         this.quantidade = qry.getBigDecimal("QTDNEG");
+        this.numeroGrade = qry.getBigDecimal("CODGRADE");
     }
 
     public BigDecimal getCodigoEmpresa() {
@@ -123,5 +126,13 @@ public class ViewProducaoSaldoItem {
 
     public void setQuantidade(BigDecimal quantidade) {
         this.quantidade = quantidade;
+    }
+
+    public BigDecimal getNumeroGrade() {
+        return numeroGrade;
+    }
+
+    public void setNumeroGrade(BigDecimal numeroGrade) {
+        this.numeroGrade = numeroGrade;
     }
 }

@@ -14,12 +14,14 @@ public class RetornoLancamentoOrdemProducao {
     private BigDecimal nulop;
 
     public RetornoLancamentoOrdemProducao() {
+        this.listaNumeroOrdem = new ArrayList<>();
         this.sucesso = true;
-        listaNumeroOrdem = new ArrayList<>();
     }
 
-    public RetornoLancamentoOrdemProducao(Boolean sucesso) {
+    public RetornoLancamentoOrdemProducao(boolean sucesso, String msg) {
+        this.listaNumeroOrdem = new ArrayList<>();
         this.sucesso = sucesso;
+        this.msg = msg;
     }
 
     public boolean isSucesso() {
@@ -40,10 +42,6 @@ public class RetornoLancamentoOrdemProducao {
 
     public List<String> getListaNumeroOrdem() {
         return listaNumeroOrdem;
-    }
-
-    public void setListaNumeroOrdem(List<String> listaNumeroOrdem) {
-        this.listaNumeroOrdem = listaNumeroOrdem;
     }
 
     public BigDecimal getNulop() {
