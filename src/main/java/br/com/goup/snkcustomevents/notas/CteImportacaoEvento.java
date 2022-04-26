@@ -15,8 +15,7 @@ public class CteImportacaoEvento implements EventoProgramavelJava {
             DynamicVO cabecalhoVO = (DynamicVO) persistenceEvent.getVo();
 
             if (cabecalhoVO.asInt("CODTIPOPER") == IdTipoOperacaoPedidoVenda.TOP_AQUISICAO_FRETE_CTE.getValue() &&
-                    cabecalhoVO.asInt("CODEMP") == CodigoEmpresa.ZAP_GRAFICA.getValue() && cabecalhoVO.asTimestamp("DTNEG") != null) {
-
+                cabecalhoVO.asTimestamp("DTNEG") != null) {
                 cabecalhoVO.setProperty("DTMOV", cabecalhoVO.asTimestamp("DTNEG"));
                 cabecalhoVO.setProperty("DTENTSAI", cabecalhoVO.asTimestamp("DTNEG"));
             }
