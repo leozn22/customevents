@@ -5,6 +5,22 @@ import br.com.sankhya.extensions.actionbutton.AcaoRotinaJava;
 import br.com.sankhya.extensions.actionbutton.ContextoAcao;
 
 public class OrdemProducaoGradeAcao  implements AcaoRotinaJava {
+   /*
+        Tabela: TPRIPROC - (Dicionário de Dados)
+        Descrição: Gerar OP da Grade
+        Parâmetros: (2)
+
+        Descrição: Numero Grade
+        Nome: NUMEROGRADE
+        Tipo de parâmetro: Número inteiro
+        Obrigatório: true
+
+        Descrição: Processo Zap
+        Nome: PROCESSOZAP
+        Tipo de parâmetro: Pesquisa
+        Obrigatório: true
+        Instância: AD_CONFPP
+    */
 
    private OrdemProducao ordemProducao = null;
    private ContextoAcao contextoAcao;

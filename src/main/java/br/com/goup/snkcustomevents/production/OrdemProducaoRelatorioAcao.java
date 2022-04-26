@@ -10,6 +10,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class OrdemProducaoRelatorioAcao implements AcaoRotinaJava {
+    /*
+         Tabela: TPRIPROC - (Dicionário de Dados)
+         Descrição: Relatório de Produção
+         Parâmetros: (0)
+     */
 
     @Override
     public void doAction(ContextoAcao ctx) throws Exception {

@@ -13,7 +13,11 @@ import java.util.Optional;
 import java.util.StringJoiner;
 
 public class OrdemProducaoAcao implements AcaoRotinaJava {
-
+	/*
+         Tabela: AD_TXPROD  (Construtor de tela)
+         Descrição: Gerar Produção
+         Parâmetros: (0)
+     */
 	private ContextoAcao contextoAcao;
 
 	@Override
