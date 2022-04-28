@@ -12,11 +12,15 @@ public class ItemProducao {
 
     private BigDecimal tamanhoLote;
 
+    private BigDecimal tamanhoLoteMetrosQuadrado;
+
     private List<Integer> listaGrade;
 
     private BigDecimal idiProc;
 
     private List<ViewProducaoSaldoItem> listaSaldoItem;
+
+    private int idProcesso;
 
     public ItemProducao() {
         listaSaldoItem = new ArrayList<>();
@@ -65,5 +69,25 @@ public class ItemProducao {
 
     public void setIdiProc(BigDecimal idiProc) {
         this.idiProc = idiProc;
+    }
+
+    public BigDecimal getTamanhoLoteMetrosQuadrado() {
+        return tamanhoLoteMetrosQuadrado;
+    }
+
+    public void setTamanhoLoteMetrosQuadrado(BigDecimal tamanhoLoteMetrosQuadrado) {
+        this.tamanhoLoteMetrosQuadrado = tamanhoLoteMetrosQuadrado;
+    }
+
+    public void setListaSaldoItem(List<ViewProducaoSaldoItem> listaSaldoItem) {
+        this.listaSaldoItem = listaSaldoItem;
+    }
+
+    public int getIdProcesso() {
+        return idProcesso;
+    }
+
+    public void setIdProcesso(int idProcesso) {
+        this.idProcesso = idProcesso;
     }
 }

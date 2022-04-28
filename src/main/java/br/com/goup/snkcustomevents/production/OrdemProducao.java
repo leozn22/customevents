@@ -1,8 +1,6 @@
 package br.com.goup.snkcustomevents.production;
 
-import br.com.goup.snkcustomevents.domain.ItemProducao;
-import br.com.goup.snkcustomevents.domain.RetornoLancamentoOrdemProducao;
-import br.com.goup.snkcustomevents.domain.ViewProducaoSaldoItem;
+import br.com.goup.snkcustomevents.domain.*;
 import br.com.sankhya.dwf.services.ServiceUtils;
 import br.com.sankhya.extensions.actionbutton.ContextoAcao;
 import br.com.sankhya.extensions.actionbutton.QueryExecutor;
@@ -21,8 +19,10 @@ import org.jdom.Content;
 import org.jdom.Element;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class OrdemProducao {
 
@@ -97,13 +97,107 @@ public class OrdemProducao {
         BigDecimal nulop = this.getNuLop();
 
         for (ItemProducao item: listaItemProducao) {
-            int idProcesso = this.buscarIdProcessoProduto(nulop, item);
-            this.inserirProdutoHTML5(nulop, idProcesso, item);
-            this.alterarAtributoProduto(nulop, item);
+            item.setIdProcesso(this.buscarIdProcessoProduto(nulop, item));
+            this.inserirProdutoHTML5(nulop, item);
+            //this.alterarAtributoProduto(nulop, item);
         }
 
+        this.calcularMetrosQuadradosGrade(nulop, listaItemProducao);
+
         RetornoLancamentoOrdemProducao retorno = this.lancarOrdensDeProducao(nulop);
+
+        if (retorno.getListaNumeroOrdem().size() == 0) {
+            contextoAcao.mostraErro("Não foi possível lançar a Ordem de Produção! <br>" + retorno.getMsg());
+        }
+
         this.gravaRetornoLancamento(retorno, nulop, listaItemProducao);
+        return retorno;
+    }
+
+    private void calcularMetrosQuadradosGrade(BigDecimal nulop, List<ItemProducao> listaItemProducao) {
+        List<ProdutoIntermediario> listaProdutoIntermediario = this.carregarListaProdutoAcabadoIntermediario(nulop, listaItemProducao);
+
+        for(ProdutoIntermediario pi: listaProdutoIntermediario) {
+            for (ItemProducao item: listaItemProducao) {
+                if (this.isProdutoIntermedirio(pi.getCodigoProduto(), item)) {
+                    pi.getListaProduto().add(item);
+                }
+            }
+        }
+
+        for(ProdutoIntermediario pi: listaProdutoIntermediario) {
+            if ("M".equals(pi.getUnidade()) && pi.getListaProduto().size() > 0) {
+                pi.setTamanhoLote(pi.getListaProduto().stream().map(i -> i.getTamanhoLoteMetrosQuadrado()).reduce(BigDecimal.ZERO, BigDecimal::add));
+                this.atualizarLoteProdutoIntermediario(nulop, pi);
+            }
+        }
+    }
+
+    private void atualizarLoteProdutoIntermediario(BigDecimal nulop, ProdutoIntermediario pi) {
+        QueryExecutor query = contextoAcao.getQuery();
+        query.setParam("P_TAMLOTE", pi.getTamanhoLote());
+        query.setParam("P_NULOP", nulop.intValue());
+        query.setParam("P_SEQOP", pi.getSequenciaOP());
+        query.setParam("P_CODPRODPA", pi.getCodigoProduto());
+
+        try {
+            query.update("UPDATE TPRPLOP SET TAMLOTE = {P_TAMLOTE} WHERE NULOP = {P_NULOP} and SEQOP = {P_SEQOP} and CODPRODPA = {P_CODPRODPA}");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        query.close();
+    }
+
+    private boolean isProdutoIntermedirio(BigDecimal codigoPI, ItemProducao item) {
+
+        QueryExecutor query = contextoAcao.getQuery();
+        try {
+            query.setParam("P_CODPRODPA", item.getCodigoProduto());
+            query.setParam("P_IDPROC", item.getIdProcesso());
+            query.setParam("P_CODPRODPI", codigoPI);
+            query.nativeSelect("SELECT * FROM VPRLPIPRO where CODPRODPA = {P_CODPRODPA} " +
+                    "AND IDPROC = {P_IDPROC} and CODPRODPI = {P_CODPRODPI}");
+
+            return query.next();
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            query.close();
+        }
+        return false;
+    }
+
+    private List<ProdutoIntermediario> carregarListaProdutoAcabadoIntermediario(BigDecimal nulop, List<ItemProducao> listaItemProducao) {
+        List<ProdutoIntermediario> retorno = new ArrayList<>();
+
+        List<String> produtos = new ArrayList<>();
+        for (ItemProducao item: listaItemProducao) {
+            produtos.add(item.getCodigoProduto().toString());
+        }
+
+        QueryExecutor query = contextoAcao.getQuery();
+        try {
+            query.setParam("P_NULOP", nulop);
+            query.nativeSelect("SELECT LOP.CODPRODPA, LOP.TAMLOTE, LOP.SEQOP, PROD.UNIDADE " +
+                                  "FROM TPRPLOP LOP " +
+                                  "INNER JOIN TGFPRO PROD ON LOP.CODPRODPA = PROD.CODPROD " +
+                                  "WHERE LOP.NULOP = {P_NULOP} " +
+                                  "AND LOP.CODPRODPA NOT IN (" + String.join(",", produtos) + ")");
+
+            if (query.next()) {
+                ProdutoIntermediario pi = new ProdutoIntermediario();
+                pi.setCodigoProduto(query.getBigDecimal("CODPRODPA"));
+                pi.setTamanhoLote(query.getBigDecimal("TAMLOTE"));
+                pi.setSequenciaOP(query.getBigDecimal("SEQOP"));
+                pi.setUnidade(query.getString("UNIDADE"));
+
+                retorno.add(pi);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            query.close();
+        }
         return retorno;
     }
 
@@ -199,7 +293,7 @@ public class OrdemProducao {
 
         QueryExecutor qryListaProducao = contextoAcao.getQuery();
         try {
-            qryListaProducao.nativeSelect("SELECT CODPROD, TRUNC((sum(QTDNEG * (LARGURA  * COMPRIMENTO )) / 1000000),2) AREA " +
+            qryListaProducao.nativeSelect("SELECT CODPROD, sum(QTDNEG) TOTAL_QTD, TRUNC((sum(QTDNEG * (LARGURA  * COMPRIMENTO )) / 1000000),2) AREA " +
                     "FROM AD_TGFFINSAL at2 WHERE CODGRADE in (" + String.join(",", listaGrade) + ") " +
                     "GROUP BY CODPROD");
 
@@ -208,7 +302,8 @@ public class OrdemProducao {
                     ItemProducao itemProducao = new ItemProducao();
                     itemProducao.setCodigoProduto(BigDecimal.valueOf(qryListaProducao.getInt("CODPROD")));
                     itemProducao.setCodigoPlanta(5);
-                    itemProducao.setTamanhoLote(qryListaProducao.getBigDecimal("AREA"));
+                    itemProducao.setTamanhoLote(qryListaProducao.getBigDecimal("TOTAL_QTD"));
+                    itemProducao.setTamanhoLoteMetrosQuadrado(qryListaProducao.getBigDecimal("AREA"));
 
                     QueryExecutor query = contextoAcao.getQuery();
                     try {
@@ -287,7 +382,7 @@ public class OrdemProducao {
         return 0;
     }
 
-    private boolean inserirProdutoHTML5(BigDecimal nulop, Integer idProcesso, ItemProducao itemProducao) throws Exception {
+    private boolean inserirProdutoHTML5(BigDecimal nulop, ItemProducao itemProducao) throws Exception {
         try {
             String json = "{" +
                     " 'params': {" +
@@ -295,7 +390,7 @@ public class OrdemProducao {
                     "    'codplp': " + itemProducao.getCodigoPlanta().toString() + "," +
                     "    'codprod': " + itemProducao.getCodigoProduto().toString() + "," +
                     "    'controle': {}," +
-                    "    'idproc': " + idProcesso + "," +
+                    "    'idproc': " + itemProducao.getIdProcesso() + "," +
                     "    'minLote': '0.0'," +
                     "    'multIdeal': '0.0'," +
                     "    'nulop': " + nulop + "," +
@@ -361,6 +456,15 @@ public class OrdemProducao {
                     }
                 }
             }
+
+            if (retorno.getListaNumeroOrdem().size() == 0) {
+                for (Object element: elements) {
+                    if ("mensagens".equals(((Element) element).getName())) {
+                        retorno.setMsg(((Content) ((Element) element).getContent().get(0)).getValue());
+                        break;
+                    }
+                }
+            }
         } catch (Exception e) {
             e.printStackTrace();
             retorno.setSucesso(false);
@@ -398,5 +502,30 @@ public class OrdemProducao {
         }
 
         query.close();
+    }
+
+    private List<MateriaPrima> listarMateriasPrimas(BigDecimal nulop) {
+        List<MateriaPrima> retorno = new ArrayList<>();
+        try {
+            String json = "{" +
+                    " 'params': {" +
+                    "    'nulop': " + nulop + "," +
+                    "    'apresentarPIs': true" +
+                    "  }" +
+                    "}";
+            sctx.setRequestBody(Json2XMLParser.jsonToElement("root", new JsonParser().parse(json).getAsJsonObject()));
+            lancamentoOrdemProducaoSP.getListaExtratoMateriais(sctx);
+
+            for (Object element: sctx.getBodyElement().getContent()) {
+                if ("materiais".equals(((Element) element).getName())) {
+                    for (int i = 0; i < ((Element) element).getContent().size(); i++) {
+                        retorno.add(new MateriaPrima((Element) ((Element) element).getContent().get(i)));
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return retorno;
     }
 }
