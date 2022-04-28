@@ -47,7 +47,7 @@ extensions.findByName("buildScan")?.withGroovyBuilder {
 
 dependencies {
     implementation("org.jboss.spec.javax.ejb", "jboss-ejb-api_3.2_spec", "1.0.1.Final")
-
+    implementation(files("lib/BrunoMotaJapeFacade.jar"))
     implementation("br.com.lughconsultoria", "lugh-lib", lughlibVersion)
     implementation("br.com.lughconsultoria", "lugh-lib-annotation", lughlibVersion)
     annotationProcessor("br.com.lughconsultoria", "lugh-lib-processor", lughlibVersion)
@@ -72,6 +72,7 @@ dependencies {
     implementation("org.json:json:20190722")
     implementation("javax.servlet:servlet-api:2.5")
     implementation("org.apache.httpcomponents:httpclient:4.5.13")
+    implementation("net.sf.jasperreports:jasperreports:4.5.1")
 }
 
 group = "br.com.goup.snkintegrations"
