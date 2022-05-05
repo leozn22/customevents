@@ -38,9 +38,7 @@ public class ImportacaoXMLNotasEvento implements EventoProgramavelJava {
                 dadosVO.setProperty("AD_NUNOTATERC", retornoGeracaoCTe.getNumeroNota());
             }
 
-            if (!retornoGeracaoCTe.getMsg().equals("")) {
-                dadosVO.setProperty("AD_MSGIMPXMLTER", retornoGeracaoCTe.getMsg());
-            }
+            dadosVO.setProperty("AD_MSGIMPXMLTER", retornoGeracaoCTe.getMsg());
         }
     }
 

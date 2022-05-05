@@ -26,6 +26,7 @@ import org.jdom.input.SAXBuilder;
 import java.io.CharArrayReader;
 import java.math.BigDecimal;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -44,6 +45,7 @@ public class ImportacaoXmlNotaCompraZapHelper {
     private DynamicVO munIniVO;
     private DynamicVO munFimVO;
     private boolean cfopCalculado;
+    private BigDecimal codParceiroXML;
     private BigDecimal codParc;
     private BigDecimal codEmp;
     private BigDecimal nuArquivoImportacao;
@@ -133,9 +135,15 @@ public class ImportacaoXmlNotaCompraZapHelper {
 
             DynamicVO empresa = (DynamicVO)empresas.iterator().next();
 
-            this.codParc = dynamicVO.asBigDecimal("CODPARC");
             this.codEmp = empresa.asBigDecimal("CODEMP");
             this.nuArquivoImportacao = dynamicVO.asBigDecimal("NUARQUIVO");
+            this.codParceiroXML = dynamicVO.asBigDecimal("CODPARC");
+            this.codParc = this.buscarParceiroArquivo(this.nuArquivoImportacao);
+
+            if (this.codParc.compareTo(BigDecimal.ZERO) == 0) {
+                retornoGeracaoCTe.setMsg("Parceiro não localizado para a nota de compra");
+                return retornoGeracaoCTe;
+            }
 
             DynamicVO cabVO = criarCabecalhoNota(dynamicVO, xmlNotaCompra);
             retornoGeracaoCTe.setNumeroNota(cabVO.asBigDecimal("NUNOTA"));
@@ -152,6 +160,36 @@ public class ImportacaoXmlNotaCompraZapHelper {
         }
 
         return retornoGeracaoCTe;
+    }
+
+    private BigDecimal buscarParceiroArquivo(BigDecimal nuArquivo) {
+        BigDecimal codigoParceiro = BigDecimal.ZERO;
+        JdbcWrapper jdbc = null;
+        try {
+            try {
+                NativeSql sqlNotas = new NativeSql(this.dwfEntityFacade.getJdbcWrapper());
+
+                sqlNotas.appendSql("SELECT par.CODPARC FROM TGFIXN t \n" +
+                        "INNER JOIN TSIEMP emp ON t.CODEMP = emp.CODEMP\n" +
+                        "INNER JOIN TGFPAR par ON par.CGC_CPF = emp.CGC\n" +
+                        "WHERE t.NUARQUIVO = " + nuArquivo + "\n" +
+                        "AND par.ATIVO = 'S'\n" +
+                        "AND ROWNUM = 1");
+
+                ResultSet rs = sqlNotas.executeQuery();
+
+                while (rs.next()) {
+                    codigoParceiro = rs.getBigDecimal("CODPARC");
+                }
+                rs.close();
+            } finally {
+                JdbcWrapper.closeSession(jdbc);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return codigoParceiro;
     }
 
     private DynamicVO criarCabecalhoNota(DynamicVO dynamicVO, CteXmlNotaCompraZap xmlNotaCompra) throws Exception {
@@ -529,7 +567,7 @@ public class ImportacaoXmlNotaCompraZapHelper {
 
             if ("T".equals(prefFinanceiroCte.getObtencaoCFOP()) || itemVO.asInt("CODCFO") == 0) {
                 if (BigDecimalUtil.getValueOrZero(prefFinanceiroCte.getCodTop()).intValue() > 0) {
-                    DynamicVO parcVO = (DynamicVO)this.dwfEntityFacade.findEntityByPrimaryKeyAsVO("Parceiro", new Object[]{this.codParc});
+                    DynamicVO parcVO = (DynamicVO)this.dwfEntityFacade.findEntityByPrimaryKeyAsVO("Parceiro", new Object[]{this.codParceiroXML});
                     DynamicVO empVO = (DynamicVO)this.dwfEntityFacade.findEntityByPrimaryKeyAsVO("Empresa", new Object[]{this.codEmp});
                     DynamicVO munIni = this.munIniVO.asInt("CODCID") > 0 ? this.munIniVO : empVO.asDymamicVO("Cidade");
                     DynamicVO munFim = this.munFimVO.asInt("CODCID") > 0 ? this.munFimVO : parcVO.asDymamicVO("Cidade");
