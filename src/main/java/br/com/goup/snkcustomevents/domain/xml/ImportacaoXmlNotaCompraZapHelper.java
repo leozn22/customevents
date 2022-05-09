@@ -18,6 +18,7 @@ import br.com.sankhya.modelcore.util.EntityFacadeFactory;
 import br.com.sankhya.modelcore.util.MGECoreParameter;
 import br.com.sankhya.util.troubleshooting.SKError;
 import br.com.sankhya.util.troubleshooting.TSLevel;
+import br.com.goup.snkcustomevents.Enumerator.CodigoEmpresa;
 import com.sankhya.util.*;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -544,7 +545,13 @@ public class ImportacaoXmlNotaCompraZapHelper {
         itemVO.setProperty("CODEMP", notaVO.asBigDecimal("CODEMP"));
         itemVO.setProperty("QTDNEG", BigDecimal.ONE);
         itemVO.setProperty("CONTROLE", " ");
-        itemVO.setProperty("CODTRIB", cteXmlNotaCompra.getImpostosCteZap().getCodTrib());
+
+        if  (this.codEmp.intValue() == CodigoEmpresa.ZAP_GRAFICA.getValue()) {
+            itemVO.setProperty("CODTRIB", BigDecimal.valueOf(90));
+        } else {
+            itemVO.setProperty("CODTRIB", cteXmlNotaCompra.getImpostosCteZap().getCodTrib());
+        }
+
         String tipoCalculoICMS = notaVO.asString("TipoOperacao.CALCICMS");
         if ("B".equals(tipoCalculoICMS)) {
             itemVO.setProperty("ALIQICMS", cteXmlNotaCompra.getImpostosCteZap().getAliqIcms());
