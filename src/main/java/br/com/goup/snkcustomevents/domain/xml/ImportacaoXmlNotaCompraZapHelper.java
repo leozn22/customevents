@@ -197,7 +197,7 @@ public class ImportacaoXmlNotaCompraZapHelper {
         DynamicVO cabVO = (DynamicVO)this.dwfEntityFacade.getDefaultValueObjectInstance("CabecalhoNota");
         cabVO.setProperty("CODEMP", this.codEmp);
         cabVO.setProperty("CODPARC", this.codParc);
-        cabVO.setProperty("CODPARCREMETENTE", dynamicVO.asBigDecimal("CODPARC"));
+        cabVO.setProperty("CODPARCREMETENTE", dynamicVO.asBigDecimal("CODPARCREMET"));
         cabVO.setProperty("CODPARCDEST", dynamicVO.asBigDecimal("CODPARCDEST"));
         cabVO.setProperty("CODTIPOPER", xmlNotaCompra.getPreferenciaCteZap().getCodTipOperCabCTeTerc());
         cabVO.setProperty("CODTIPVENDA", xmlNotaCompra.getPreferenciaCteZap().getCodTipNegCabCTeTerc());
