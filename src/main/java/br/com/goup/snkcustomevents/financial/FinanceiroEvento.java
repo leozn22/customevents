@@ -70,6 +70,7 @@ public class FinanceiroEvento extends SnkIntegrationsApi implements EventoProgra
         }
 
         this.enviarCredito(persistenceEvent);
+        this.sincronizarBoletoGeradoSnk(persistenceEvent);
     }
 
     private void enviarFinanceiro(PersistenceEvent persistenceEvent) throws Exception {
@@ -117,6 +118,19 @@ public class FinanceiroEvento extends SnkIntegrationsApi implements EventoProgra
             String url = this.urlApi + "/v2/caixas/pagamentos/" + financeiroVo.asBigDecimal("NUFIN").toString();
             this.enviarDados("DELETE", url, "{\"idUsuario\":"
                     + financeiroVo.asBigDecimal("CODUSU").toString() + "}");
+        }
+    }
+
+    private void sincronizarBoletoGeradoSnk(PersistenceEvent persistenceEvent) {
+        try {
+            DynamicVO financeiroVo = (DynamicVO) persistenceEvent.getVo();
+
+            if (!"".equals(financeiroVo.asString("LINHADIGITAVEL"))) {
+                String url = this.urlApi + "/v2/snk/pagamentos/boletos/" + financeiroVo.asBigDecimal("NUFIN").toString();
+                this.enviarDados("POST", url, "");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
