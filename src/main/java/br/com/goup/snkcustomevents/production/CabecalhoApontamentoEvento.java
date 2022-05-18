@@ -7,14 +7,13 @@ import br.com.sankhya.jape.event.TransactionContext;
 import br.com.sankhya.jape.vo.DynamicVO;
 
 /**
- * Tabela: TPRIATV - (Dicionario de Dados)
- * Instância: InstanciaAtividade
+ * Tabela: TPRAPO - (Dicionario de Dados)
+ * Instância: CabecalhoApontamento
  *
  * (EVENTO)
  * Descrição: Atualização do setor dos itens Produzidos
  */
-public class AtividadeProducaoEvento implements EventoProgramavelJava {
-
+public class CabecalhoApontamentoEvento implements EventoProgramavelJava {
     @Override
     public void beforeInsert(PersistenceEvent persistenceEvent) throws Exception {
 
@@ -22,7 +21,13 @@ public class AtividadeProducaoEvento implements EventoProgramavelJava {
 
     @Override
     public void beforeUpdate(PersistenceEvent persistenceEvent) throws Exception {
+        DynamicVO apontamentoCabecalho = (DynamicVO) persistenceEvent.getVo();
 
+        if ("C".equals(apontamentoCabecalho.asString("SITUACAO"))) {
+            MovimentacaoSetorItemHelper movimentacao = new MovimentacaoSetorItemHelper(persistenceEvent.getJdbcWrapper());
+            movimentacao.atualizarSetorProducaoApontamento(apontamentoCabecalho.asBigDecimal("NUAPO"),
+                                                           apontamentoCabecalho.asBigDecimal("IDIATV"));
+        }
     }
 
     @Override
@@ -37,8 +42,7 @@ public class AtividadeProducaoEvento implements EventoProgramavelJava {
 
     @Override
     public void afterUpdate(PersistenceEvent persistenceEvent) throws Exception {
-        MovimentacaoSetorItemHelper movimentacao = new MovimentacaoSetorItemHelper(persistenceEvent.getJdbcWrapper());
-        movimentacao.atualizarSetorProducaoAtividade((DynamicVO) persistenceEvent.getVo());
+
     }
 
     @Override

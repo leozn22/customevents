@@ -1,4 +1,4 @@
-package br.com.goup.snkcustomevents.production;
+package br.com.goup.snkcustomevents.production.helpers;
 
 import br.com.goup.snkcustomevents.domain.*;
 import br.com.sankhya.dwf.services.ServiceUtils;
@@ -19,18 +19,16 @@ import org.jdom.Content;
 import org.jdom.Element;
 
 import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
-public class OrdemProducao {
+public class OrdemProducaoHelper {
 
     private final ContextoAcao contextoAcao;
     private final ServiceContext sctx;
     private final LancamentoOrdemProducaoSP lancamentoOrdemProducaoSP;
 
-    public OrdemProducao(ContextoAcao contextoAcao) throws Exception {
+    public OrdemProducaoHelper(ContextoAcao contextoAcao) throws Exception {
         this.contextoAcao = contextoAcao;
 
         sctx = new ServiceContext(null);

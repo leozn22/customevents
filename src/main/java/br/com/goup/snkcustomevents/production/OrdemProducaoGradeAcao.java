@@ -1,28 +1,29 @@
 package br.com.goup.snkcustomevents.production;
 
 import br.com.goup.snkcustomevents.domain.RetornoLancamentoOrdemProducao;
+import br.com.goup.snkcustomevents.production.helpers.OrdemProducaoHelper;
 import br.com.sankhya.extensions.actionbutton.AcaoRotinaJava;
 import br.com.sankhya.extensions.actionbutton.ContextoAcao;
 
+/**
+ * Tabela: TPRIPROC - (Dicionário de Dados)
+ * Descrição: Gerar OP da Grade
+ * Parâmetros: (2)
+ *
+ * Descrição: Numero Grade
+ * Nome: NUMEROGRADE
+ * Tipo de parâmetro: Número inteiro
+ * Obrigatório: true
+ *
+ * Descrição: Processo Zap
+ * Nome: PROCESSOZAP
+ * Tipo de parâmetro: Pesquisa
+ * Obrigatório: true
+ * Instância: AD_CONFPP
+ */
 public class OrdemProducaoGradeAcao  implements AcaoRotinaJava {
-   /*
-        Tabela: TPRIPROC - (Dicionário de Dados)
-        Descrição: Gerar OP da Grade
-        Parâmetros: (2)
 
-        Descrição: Numero Grade
-        Nome: NUMEROGRADE
-        Tipo de parâmetro: Número inteiro
-        Obrigatório: true
-
-        Descrição: Processo Zap
-        Nome: PROCESSOZAP
-        Tipo de parâmetro: Pesquisa
-        Obrigatório: true
-        Instância: AD_CONFPP
-    */
-
-   private OrdemProducao ordemProducao = null;
+   private OrdemProducaoHelper ordemProducao = null;
    private ContextoAcao contextoAcao;
 
    @Override
@@ -43,7 +44,7 @@ public class OrdemProducaoGradeAcao  implements AcaoRotinaJava {
            contextoAcao.mostraErro("Informe o processo Zap válido! Erro: " + e.getMessage());
        }
 
-       ordemProducao = new OrdemProducao(contextoAcao);
+       ordemProducao = new OrdemProducaoHelper(contextoAcao);
 
        int qtdItensGrade = ordemProducao.quantidadeItensGrade(numeroGrade);
 
@@ -57,7 +58,6 @@ public class OrdemProducaoGradeAcao  implements AcaoRotinaJava {
     }
 
     private void processarOrdemProducaoGrade(Integer codigoGrade, Integer processoZap) throws Exception {
-
         RetornoLancamentoOrdemProducao retorno = ordemProducao.processoProducaoGrade(codigoGrade, processoZap);
 
         String mensagem = retorno.getMsg();

@@ -3,6 +3,7 @@ package br.com.goup.snkcustomevents.production;
 import br.com.goup.snkcustomevents.domain.ItemProducao;
 import br.com.goup.snkcustomevents.domain.RetornoLancamentoOrdemProducao;
 import br.com.goup.snkcustomevents.domain.ViewProducaoSaldoItem;
+import br.com.goup.snkcustomevents.production.helpers.OrdemProducaoHelper;
 import br.com.sankhya.extensions.actionbutton.AcaoRotinaJava;
 import br.com.sankhya.extensions.actionbutton.ContextoAcao;
 import br.com.sankhya.extensions.actionbutton.Registro;
@@ -12,12 +13,14 @@ import java.util.List;
 import java.util.Optional;
 import java.util.StringJoiner;
 
+/**
+ * Tabela: AD_TXPROD  (Construtor de tela)
+ * Descrição: Gerar Produção
+ *
+ * Parâmetros: (0)
+ */
 public class OrdemProducaoAcao implements AcaoRotinaJava {
-	/*
-         Tabela: AD_TXPROD  (Construtor de tela)
-         Descrição: Gerar Produção
-         Parâmetros: (0)
-     */
+
 	private ContextoAcao contextoAcao;
 
 	@Override
@@ -63,7 +66,7 @@ public class OrdemProducaoAcao implements AcaoRotinaJava {
 			}
 		}
 
-		OrdemProducao ordemProducao = new OrdemProducao(contextoAcao);
+		OrdemProducaoHelper ordemProducao = new OrdemProducaoHelper(contextoAcao);
 		List<RetornoLancamentoOrdemProducao> listaRetorno = new ArrayList<>();
 
 		for (ItemProducao itemProducao: listaItemProducao) {
