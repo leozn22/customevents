@@ -115,18 +115,18 @@ public class MovimentacaoSetorItemHelper {
         SetorAtividade setorAtividade = null;
 
         NativeSql consulta = new NativeSql(this.jdbc);
-        consulta.appendSql("SELECT atv_atual.IDIATV, TPREFX.DESCRICAO \n" +
-                "FROM \n" +
-                "(SELECT MIN(IDIATV) IDIATV FROM TPRIATV\n" +
-                "WHERE IDIPROC = :IDIPROC\n" +
-                "AND IDIATV NOT IN (\n" +
-                " SELECT COALESCE(MAX(IDIATV), 0) FROM TZAAPONTAMENTO WHERE TZANUITEM = :TZANUITEM\n" +
+        consulta.appendSql("SELECT atv_atual.IDIATV, TPREFX.DESCRICAO\n" +
+                "FROM\n" +
+                "(SELECT MIN(TPRIATV.IDIATV) IDIATV FROM TPRIATV\n" +
+                "INNER JOIN AD_TGFFINSAL SALDO ON TPRIATV.IDIPROC = SALDO.IDIPROC\n" +
+                "WHERE SALDO.ITEM = :TZANUITEM\n" +
+                "AND TPRIATV.IDIATV NOT IN (\n" +
+                "SELECT COALESCE(MAX(IDIATV), 0) FROM TZAAPONTAMENTO WHERE TZANUITEM = :TZANUITEM\n" +
                 ")) atv_atual\n" +
-                "INNER JOIN TPRIATV ON  atv_atual.IDIATV = TPRIATV.IDIATV\n" +
+                "INNER JOIN TPRIATV ON atv_atual.IDIATV = TPRIATV.IDIATV\n" +
                 "INNER JOIN TPREFX ON TPRIATV.IDEFX = TPREFX.IDEFX");
 
         try {
-            consulta.setNamedParameter("IDIPROC", codigoItem);
             consulta.setNamedParameter("TZANUITEM", idiproc);
             ResultSet result = consulta.executeQuery();
 
