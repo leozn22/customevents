@@ -37,7 +37,7 @@ public class MovimentacaoSetorItemHelper {
             while (result.next()) {
                 //Como todos os itens estão no mesmo apontamento não preciso buscar o setor novamente
                 if (setorItem == null) {
-                    setorItem = this.buscarSetorAtividadeItem(result.getBigDecimal("TZANUITEM"), result.getBigDecimal("IDIPROC"));
+                    setorItem = this.buscarSetorAtividadeItem(result.getBigDecimal("TZANUITEM"));
                 }
 
                 if (setorItem != null) {
@@ -71,7 +71,7 @@ public class MovimentacaoSetorItemHelper {
                         opIntermediaria = false;
                     }
 
-                    SetorAtividade setorItem = this.buscarSetorAtividadeItem(result.getBigDecimal("ITEM"), result.getBigDecimal("IDIPROC"));
+                    SetorAtividade setorItem = this.buscarSetorAtividadeItem(result.getBigDecimal("ITEM"));
 
                     if (setorItem != null) {
                         this.atualizarClienteSaldo(setorItem.getCodigoItem(), setorItem.getIdiatv(), setorItem.getDescricaoAtividade());
@@ -111,7 +111,7 @@ public class MovimentacaoSetorItemHelper {
         }
     }
 
-    private SetorAtividade buscarSetorAtividadeItem(BigDecimal codigoItem, BigDecimal idiproc) {
+    private SetorAtividade buscarSetorAtividadeItem(BigDecimal codigoItem) {
         SetorAtividade setorAtividade = null;
 
         NativeSql consulta = new NativeSql(this.jdbc);
@@ -123,11 +123,11 @@ public class MovimentacaoSetorItemHelper {
                 "AND TPRIATV.IDIATV NOT IN (\n" +
                 "SELECT COALESCE(MAX(IDIATV), 0) FROM TZAAPONTAMENTO WHERE TZANUITEM = :TZANUITEM\n" +
                 ")) atv_atual\n" +
-                "INNER JOIN TPRIATV ON atv_atual.IDIATV = TPRIATV.IDIATV\n" +
+                "INNER JOIN TPRIATV ON  atv_atual.IDIATV = TPRIATV.IDIATV\n" +
                 "INNER JOIN TPREFX ON TPRIATV.IDEFX = TPREFX.IDEFX");
 
         try {
-            consulta.setNamedParameter("TZANUITEM", idiproc);
+            consulta.setNamedParameter("TZANUITEM", codigoItem);
             ResultSet result = consulta.executeQuery();
 
             if (result.next()) {
