@@ -120,9 +120,9 @@ public class MovimentacaoSetorItemHelper {
                 "(SELECT MIN(TPRIATV.IDIATV) IDIATV FROM TPRIATV\n" +
                 "INNER JOIN AD_TGFFINSAL SALDO ON TPRIATV.IDIPROC = SALDO.IDIPROC\n" +
                 "WHERE SALDO.ITEM = :TZANUITEM\n" +
-                "AND TPRIATV.IDIATV NOT IN (\n" +
-                "SELECT COALESCE(MAX(IDIATV), 0) FROM TZAAPONTAMENTO WHERE TZANUITEM = :TZANUITEM\n" +
-                ")) atv_atual\n" +
+                "AND TPRIATV.IDIATV > (SELECT COALESCE(MAX(IDIATV), 0) FROM TZAAPONTAMENTO WHERE TZANUITEM = :TZANUITEM)\n" +
+                "AND TPRIATV.DHACEITE IS NOT NULL\n" +
+                ") atv_atual\n" +
                 "INNER JOIN TPRIATV ON  atv_atual.IDIATV = TPRIATV.IDIATV\n" +
                 "INNER JOIN TPREFX ON TPRIATV.IDEFX = TPREFX.IDEFX");
 
