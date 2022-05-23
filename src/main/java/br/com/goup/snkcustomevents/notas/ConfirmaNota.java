@@ -10,6 +10,7 @@ import br.com.sankhya.jape.sql.NativeSql;
 import br.com.sankhya.modelcore.auth.AuthenticationInfo;
 import br.com.sankhya.modelcore.comercial.BarramentoRegra;
 import br.com.sankhya.modelcore.comercial.CentralFaturamento;
+import br.com.sankhya.modelcore.comercial.CentralFinanceiro;
 import br.com.sankhya.modelcore.comercial.ConfirmacaoNotaHelper;
 import br.com.sankhya.modelcore.util.EntityFacadeFactory;
 import br.com.sankhya.modelcore.util.SPBeanUtils;
@@ -73,6 +74,22 @@ public class ConfirmaNota implements ScheduledAction {
                     System.out.println("Acao Agendada - Confirma Nota Nro. Unico: " + nunota);
 
                     JapeSession.SessionHandle hnd = null;
+                    try {
+                        hnd = JapeSession.open();
+                        hnd.execWithTX(() -> {
+                            try {
+                                CentralFinanceiro financeiroUtils = new CentralFinanceiro();
+                                financeiroUtils.inicializaNota(nunota);
+                                financeiroUtils.refazerFinanceiro();
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        });
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    } finally {
+                        JapeSession.close(hnd);
+                    }
                     try {
                         hnd = JapeSession.open();
                         hnd.execWithTX(() -> {
