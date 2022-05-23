@@ -8,14 +8,15 @@ import br.com.sankhya.jape.vo.DynamicVO;
 
 import java.math.BigDecimal;
 
-public class ImportacaoXMLNotasEvento implements EventoProgramavelJava {
-    /*
-       Tabela: TGFIXN - (Construtor de tela)
-       Instância: ImportacaoXMLNotas
+/**
+ * Tabela: TGFIXN - (Construtor de tela)
+ * Instância: ImportacaoXMLNotas
+ *
+ * (EVENTO)
+ * Descrição: AJUSTE IMPORTAÇÃO XML
+ */
 
-       (EVENTO)
-       Descrição: AJUSTE IMPORTAÇÃO XML
-    */
+public class ImportacaoXMLNotasEvento implements EventoProgramavelJava {
 
     @Override
     public void beforeInsert(PersistenceEvent persistenceEvent) throws Exception {

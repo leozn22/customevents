@@ -1,6 +1,5 @@
 package br.com.goup.snkcustomevents.notas;
 
-import br.com.goup.snkcustomevents.Enumerator.CodigoEmpresa;
 import br.com.goup.snkcustomevents.Enumerator.IdTipoOperacaoPedidoVenda;
 import br.com.sankhya.extensions.eventoprogramavel.EventoProgramavelJava;
 import br.com.sankhya.jape.event.PersistenceEvent;

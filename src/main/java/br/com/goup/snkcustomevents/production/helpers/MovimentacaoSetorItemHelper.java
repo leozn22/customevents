@@ -19,13 +19,14 @@ public class MovimentacaoSetorItemHelper {
         this.jdbc = jdbc;
     }
 
-    public void atualizarSetorProducaoApontamento(BigDecimal nuapo, BigDecimal idiatv) {
+    public void atualizarSetorProducaoApontamento(BigDecimal nuapo, BigDecimal idiatv) throws Exception {
         NativeSql sql = new NativeSql(this.jdbc);
-        try {
-            sql.setNamedParameter("NUAPO", nuapo);
-            sql.setNamedParameter("IDIATV", idiatv);
+        sql.setNamedParameter("NUAPO", nuapo);
+        sql.setNamedParameter("IDIATV", idiatv);
 
-            ResultSet result = sql.executeQuery("SELECT APONTAMENTO.NUAPO, APONTAMENTO.TZANUITEM, APONTAMENTO.IDIATV,\n" +
+        ResultSet result = null;
+        try {
+            result = sql.executeQuery("SELECT APONTAMENTO.NUAPO, APONTAMENTO.TZANUITEM, APONTAMENTO.IDIATV,\n" +
                     "APONTAMENTO.IDIPROC\n" +
                     "FROM TZAAPONTAMENTO APONTAMENTO\n" +
                     "INNER JOIN AD_TGFFINSAL SALDO ON APONTAMENTO.TZANUITEM = SALDO.ITEM \n" +
@@ -33,8 +34,13 @@ public class MovimentacaoSetorItemHelper {
                     "AND APONTAMENTO.IDIATV = :IDIATV");
 
             SetorAtividade setorItem;
+            boolean apontamentoLocalizado = false;
 
             while (result.next()) {
+                if (!apontamentoLocalizado) {
+                    apontamentoLocalizado = true;
+                }
+
                 setorItem = this.buscarProximoSetorAtividadeItem(result.getBigDecimal("TZANUITEM"));
 
                 if (setorItem != null) {
@@ -42,15 +48,26 @@ public class MovimentacaoSetorItemHelper {
                 }
             }
 
-            result.close();
-        } catch (Exception e) {
-            e.printStackTrace();
+            if (!apontamentoLocalizado) {
+                result = sql.executeQuery("SELECT count(AD_TGFFINSAL.ITEM) QTD FROM TPRIATV\n" +
+                        "INNER JOIN TPRAPO ON TPRIATV.IDIATV = TPRAPO.IDIATV \n" +
+                        "INNER JOIN AD_TGFFINSAL ON AD_TGFFINSAL.IDIPROC = TPRIATV.IDIPROC\n" +
+                        "WHERE TPRAPO.NUAPO = :NUAPO");
+
+                if (result.next() && result.getInt("QTD") > 0) {
+                    throw new Exception("Esta OP foi originada de " + result.getInt("QTD") + " item(ns) é não foi realizado apontamento manual. Tela: Apontamento Item (HTML5)");
+                }
+            }
+        } finally {
+            if (result != null) {
+                result.close();
+            }
         }
     }
 
     public void atualizarStatusOrdemProducao(BigDecimal idiproc, String statusProc) {
 
-        String setorOP = "";
+        String setorOP;
 
         switch (statusProc){
             case "F":
@@ -67,10 +84,6 @@ public class MovimentacaoSetorItemHelper {
             return;
         }
 
-        if (!this.existeApontamentoOP(idiproc)) {
-            return;
-        }
-
         NativeSql sql = new NativeSql(this.jdbc);
         try {
             sql.setNamedParameter("IDIPROC", idiproc);
@@ -78,6 +91,10 @@ public class MovimentacaoSetorItemHelper {
 
             while (result.next()) {
                 this.atualizarClienteSaldo(result.getBigDecimal("ITEM"), null, setorOP);
+            }
+
+            if (statusProc.equals("C")) {
+                JapeFactory.dao("AD_GRADEOP").deleteByCriteria("IDIPROC = ? ", idiproc);
             }
 
             result.close();
@@ -226,9 +243,7 @@ public class MovimentacaoSetorItemHelper {
             consulta.setNamedParameter("TZANUITEM", codigoItem);
             ResultSet result = consulta.executeQuery();
 
-            if (result.next()) {
-                retorno = result.getInt("QTD") > 0;
-            }
+            retorno = result.next() && result.getInt("QTD") > 0;
 
             result.close();
         } catch (Exception e) {

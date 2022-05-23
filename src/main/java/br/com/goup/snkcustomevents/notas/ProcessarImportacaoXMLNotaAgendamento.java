@@ -21,7 +21,6 @@ import org.jdom.Element;
 
 import java.math.BigDecimal;
 import java.sql.ResultSet;
-import java.util.Collection;
 
 public class ProcessarImportacaoXMLNotaAgendamento implements ScheduledAction, AcaoRotinaJava {
 
