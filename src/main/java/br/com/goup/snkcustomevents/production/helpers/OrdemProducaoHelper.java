@@ -496,7 +496,7 @@ public class OrdemProducaoHelper {
 
         for(ViewProducaoSaldoItem item : listaItem) {
             query.setParam("P_ITENS", Integer.valueOf(item.getTzaNuItem()));
-            query.update("UPDATE AD_TGFFINSAL SET STATUSPRODUCAO = 'OP CRIADA',  NULOP = {P_NULOP}, IDIPROC = {P_IDIPROC} WHERE ITEM = {P_ITENS}");
+            query.update("UPDATE AD_TGFFINSAL SET STATUSPRODUCAO = 'OP CRIADA',  NULOP = {P_NULOP}, IDIPROC = {P_IDIPROC}, IDIATV = NULL WHERE ITEM = {P_ITENS}");
         }
 
         query.close();

@@ -32,18 +32,55 @@ public class MovimentacaoSetorItemHelper {
                     "WHERE APONTAMENTO.NUAPO = :NUAPO\n" +
                     "AND APONTAMENTO.IDIATV = :IDIATV");
 
-            SetorAtividade setorItem = null;
+            SetorAtividade setorItem;
 
             while (result.next()) {
-                //Como todos os itens estão no mesmo apontamento não preciso buscar o setor novamente
-                if (setorItem == null) {
-                    setorItem = this.buscarSetorAtividadeItem(result.getBigDecimal("TZANUITEM"));
-                }
+                setorItem = this.buscarProximoSetorAtividadeItem(result.getBigDecimal("TZANUITEM"));
 
                 if (setorItem != null) {
                     this.atualizarClienteSaldo(result.getBigDecimal("TZANUITEM"), setorItem.getIdiatv(), setorItem.getDescricaoAtividade());
                 }
             }
+
+            result.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void atualizarStatusOrdemProducao(BigDecimal idiproc, String statusProc) {
+
+        String setorOP = "";
+
+        switch (statusProc){
+            case "F":
+                setorOP = "OP FINALIZADA";
+                break;
+            case "C":
+                setorOP = "OP CANCELADA";
+                break;
+            default:
+                setorOP = "";
+        }
+
+        if ("".equals(statusProc)) {
+            return;
+        }
+
+        if (!this.existeApontamentoOP(idiproc)) {
+            return;
+        }
+
+        NativeSql sql = new NativeSql(this.jdbc);
+        try {
+            sql.setNamedParameter("IDIPROC", idiproc);
+            ResultSet result  = sql.executeQuery("SELECT SALDO.ITEM FROM AD_TGFFINSAL SALDO WHERE SALDO.IDIPROC = :IDIPROC");
+
+            while (result.next()) {
+                this.atualizarClienteSaldo(result.getBigDecimal("ITEM"), null, setorOP);
+            }
+
+            result.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -61,25 +98,43 @@ public class MovimentacaoSetorItemHelper {
 
             try {
                 sql.setNamedParameter("IDIPROC", instanciaAtividadeVO.asInt("IDIPROC"));
-                ResultSet result = sql.executeQuery("SELECT ITEM, IDIPROC FROM AD_TGFFINSAL at2 \n" +
-                        "WHERE IDIPROC = :IDIPROC");
+                sql.setNamedParameter("IDEFX", instanciaAtividadeVO.asInt("IDEFX"));
 
-                boolean opIntermediaria = true;
+                ResultSet result;
+                boolean verificarOpIntermediaria = true;
+
+                if (this.existeApontamentoOP(instanciaAtividadeVO.asBigDecimal("IDIPROC"))) {
+                    result = sql.executeQuery("SELECT DISTINCT SALDO.ITEM, SALDO.IDIPROC FROM AD_TGFFINSAL SALDO\n" +
+                            "INNER JOIN TZAAPONTAMENTO ON SALDO.ITEM = TZAAPONTAMENTO.TZANUITEM AND SALDO.IDIPROC = TZAAPONTAMENTO.IDIPROC\n" +
+                            "INNER JOIN TPRIATV ATIVIDADE ON ATIVIDADE.IDIATV = TZAAPONTAMENTO.IDIATV\n" +
+                            "WHERE SALDO.IDIPROC = :IDIPROC\n" +
+                            "AND ATIVIDADE.IDEFX IN (\n" +
+                            "SELECT IDEFXORIG FROM TPRTFX \n" +
+                            "INNER JOIN TPREFX ON TPRTFX.IDEFXORIG = TPREFX.IDEFX \n" +
+                            "WHERE TPRTFX.IDEFXDEST = :IDEFX\n" +
+                            "AND TPREFX.TIPO = 1101\n" +
+                            ")");
+                    verificarOpIntermediaria = false;
+                } else {
+                    result = sql.executeQuery("SELECT ITEM, IDIPROC FROM AD_TGFFINSAL at2 \n" +
+                            "WHERE IDIPROC = :IDIPROC");
+
+                }
 
                 while (result.next()) {
-                    if (opIntermediaria) {
-                        opIntermediaria = false;
+                    if (verificarOpIntermediaria) {
+                        verificarOpIntermediaria = false;
                     }
 
-                    SetorAtividade setorItem = this.buscarSetorAtividadeItem(result.getBigDecimal("ITEM"));
+                    SetorAtividade setorItem = this.buscarProximoSetorAtividadeItem(result.getBigDecimal("ITEM"));
 
                     if (setorItem != null) {
                         this.atualizarClienteSaldo(setorItem.getCodigoItem(), setorItem.getIdiatv(), setorItem.getDescricaoAtividade());
                     }
                 }
 
-                if (opIntermediaria) {
-                    result = sql.executeQuery("SELECT ITEM FROM TPRIPROC OP\n" +
+                if (verificarOpIntermediaria) {
+                    result = sql.executeQuery("SELECT SALDO.ITEM FROM TPRIPROC OP\n" +
                             "INNER JOIN AD_TGFFINSAL SALDO ON OP.AD_NULOP = SALDO.NULOP \n" +
                             "WHERE OP.IDIPROC = :IDIPROC");
 
@@ -87,6 +142,8 @@ public class MovimentacaoSetorItemHelper {
                         this.atualizarClienteSaldo(result.getBigDecimal("ITEM"), null, setorAtividade);
                     }
                 }
+
+                result.close();
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -111,20 +168,34 @@ public class MovimentacaoSetorItemHelper {
         }
     }
 
-    private SetorAtividade buscarSetorAtividadeItem(BigDecimal codigoItem) {
+    private SetorAtividade buscarProximoSetorAtividadeItem(BigDecimal codigoItem) {
+
         SetorAtividade setorAtividade = null;
 
         NativeSql consulta = new NativeSql(this.jdbc);
-        consulta.appendSql("SELECT atv_atual.IDIATV, TPREFX.DESCRICAO\n" +
-                "FROM\n" +
-                "(SELECT MIN(TPRIATV.IDIATV) IDIATV FROM TPRIATV\n" +
-                "INNER JOIN AD_TGFFINSAL SALDO ON TPRIATV.IDIPROC = SALDO.IDIPROC\n" +
-                "WHERE SALDO.ITEM = :TZANUITEM\n" +
-                "AND TPRIATV.IDIATV > (SELECT COALESCE(MAX(IDIATV), 0) FROM TZAAPONTAMENTO WHERE TZANUITEM = :TZANUITEM)\n" +
-                "AND TPRIATV.DHACEITE IS NOT NULL\n" +
-                ") atv_atual\n" +
-                "INNER JOIN TPRIATV ON  atv_atual.IDIATV = TPRIATV.IDIATV\n" +
-                "INNER JOIN TPREFX ON TPRIATV.IDEFX = TPREFX.IDEFX");
+        consulta.appendSql("SELECT PROXIMA_ATIVIDADE.IDIATV, TPREFX.DESCRICAO ");
+        consulta.appendSql("FROM ( ");
+        consulta.appendSql("SELECT MIN(TPRIATV.IDIATV) IDIATV FROM TPRIATV ");
+        consulta.appendSql("INNER JOIN AD_TGFFINSAL SALDO ON TPRIATV.IDIPROC = SALDO.IDIPROC ");
+        consulta.appendSql("WHERE SALDO.ITEM = :TZANUITEM ");
+
+        if (this.itemJaApontado(codigoItem)) {
+            consulta.appendSql("AND TPRIATV.IDEFX in ( ");
+            consulta.appendSql("\tSELECT TRANSICAOFLUXO.IDEFXDEST FROM ");
+            consulta.appendSql("\t(SELECT APT.IDIATV, APT.IDIPROC FROM TZAAPONTAMENTO APT ");
+            consulta.appendSql("\tINNER JOIN AD_TGFFINSAL ADS ON ADS.ITEM = APT.TZANUITEM AND APT.IDIPROC = ADS.IDIPROC ");
+            consulta.appendSql("\tWHERE APT.TZANUITEM = :TZANUITEM ");
+            consulta.appendSql("\tORDER BY TZADTGERACAO DESC fetch first 1 row ONLY) ULTIMO_APT ");
+            consulta.appendSql("\tINNER JOIN TPRIATV ATIVIDADE ON ULTIMO_APT.IDIATV = ATIVIDADE.IDIATV ");
+            consulta.appendSql("\tINNER JOIN TPRTFX TRANSICAOFLUXO ON ATIVIDADE.IDEFX = TRANSICAOFLUXO.IDEFXORIG ");
+            consulta.appendSql(") ");
+        }
+
+        consulta.appendSql("AND TPRIATV.DHACEITE IS NOT NULL ");
+        consulta.appendSql("AND TPRIATV.DHFINAL IS NULL ");
+        consulta.appendSql(") PROXIMA_ATIVIDADE ");
+        consulta.appendSql("INNER JOIN TPRIATV ON  PROXIMA_ATIVIDADE.IDIATV = TPRIATV.IDIATV ");
+        consulta.appendSql("INNER JOIN TPREFX ON TPRIATV.IDEFX = TPREFX.IDEFX ");
 
         try {
             consulta.setNamedParameter("TZANUITEM", codigoItem);
@@ -134,11 +205,62 @@ public class MovimentacaoSetorItemHelper {
                 setorAtividade = new SetorAtividade(result.getBigDecimal("IDIATV"),
                         codigoItem, result.getString("DESCRICAO"));
             }
+
+            result.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
 
         return setorAtividade;
+    }
+
+    private boolean itemJaApontado(BigDecimal codigoItem) {
+        boolean retorno = false;
+
+        NativeSql consulta = new NativeSql(this.jdbc);
+        consulta.appendSql("SELECT count(APT.NUAPO) QTD FROM TZAAPONTAMENTO APT\n" +
+                "INNER JOIN AD_TGFFINSAL SALDO ON SALDO.ITEM = APT.TZANUITEM AND APT.IDIPROC = SALDO.IDIPROC \n" +
+                "WHERE APT.TZANUITEM = :TZANUITEM");
+
+        try {
+            consulta.setNamedParameter("TZANUITEM", codigoItem);
+            ResultSet result = consulta.executeQuery();
+
+            if (result.next()) {
+                retorno = result.getInt("QTD") > 0;
+            }
+
+            result.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return retorno;
+    }
+
+    private boolean existeApontamentoOP(BigDecimal idiproc) {
+        boolean retorno = false;
+
+        if (idiproc.compareTo(BigDecimal.ZERO) == 0) {
+            return false;
+        }
+
+        NativeSql consulta = new NativeSql(this.jdbc);
+        consulta.appendSql("SELECT count(TZAAPONTAMENTO.NUAPO) QTD FROM AD_TGFFINSAL SALDO\n" +
+                "INNER JOIN TZAAPONTAMENTO ON SALDO.ITEM = TZAAPONTAMENTO.TZANUITEM AND SALDO.IDIPROC = TZAAPONTAMENTO.IDIPROC\n" +
+                "WHERE SALDO.IDIPROC = :IDIPROC");
+
+        try {
+            consulta.setNamedParameter("IDIPROC", idiproc);
+            ResultSet result = consulta.executeQuery();
+
+            retorno = result.next() && (result.getInt("QTD") > 0);
+            result.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return retorno;
     }
 
     private String buscarDescricaoSetorAtividade(int idefx) {
@@ -157,11 +279,11 @@ public class MovimentacaoSetorItemHelper {
             consulta.setNamedParameter("IDEFX", idefx);
             ResultSet result = consulta.executeQuery();
 
-            if (result.next()) {
-                if (result.getString("setor") != null) {
-                    setorAtividade = result.getString("setor");
-                }
+            if (result.next() && (result.getString("setor") != null)) {
+                setorAtividade = result.getString("setor");
             }
+
+            result.close();
         } catch (Exception e) {
             e.printStackTrace();
         }

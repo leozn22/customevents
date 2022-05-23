@@ -42,7 +42,7 @@ public class OrdemProducaoAcao implements AcaoRotinaJava {
 			String tzaNuItem = item.getTzaNuItem();
 			joiner.add(tzaNuItem);
 		}
-		ctx.confirmar("Gerar Produ\u00e7\u00e3o", "Deseja gerar a produção dos iten(s) [" + joiner.toString() + "] ?", 1);
+		ctx.confirmar("Gerar Produ\u00E7\u00E3o", "Deseja gerar a produ\u00E7\u00E3o dos iten(s) [" + joiner.toString() + "] ?", 1);
 		this.processarProducao(listaItens);
 	}
 
@@ -103,7 +103,7 @@ public class OrdemProducaoAcao implements AcaoRotinaJava {
 		}
 
 		if (msg.equals("")) {
-			msg = "Falha ao gerar OP erro não catalogado";
+			msg = "Falha ao gerar OP erro n\u00E3o catalogado";
 		}
 
 		contextoAcao.setMensagemRetorno(msg);
