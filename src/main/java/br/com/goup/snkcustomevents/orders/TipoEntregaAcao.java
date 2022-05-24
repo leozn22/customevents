@@ -13,7 +13,22 @@ import br.com.sankhya.modelcore.util.DynamicEntityNames;
 
 import java.math.BigDecimal;
 
+/**
+ * Tabela: TGFCAB - (Dicionário de Dados)
+ * Descrição: Alterar tipo de entrega
+ *
+ * Descrição: Tipo Entrega
+ * Nome: CODTETALTER
+ * Tipo de parâmetro: Pesquisa Instância: TxpZapTipoEntrega
+ * Obrigatório: true
+ */
 public class TipoEntregaAcao extends SnkIntegrationsApi implements AcaoRotinaJava {
+
+    public TipoEntregaAcao() {
+        this.exigeAutenticacao = true;
+        this.forceUrl("AllTest"); // Opções: LocalTest, ProductionTest, AllTest, Production
+    }
+
     @Override
     public void doAction(ContextoAcao contextoAcao) throws Exception {
         final Registro[] linhas = contextoAcao.getLinhas();
@@ -25,7 +40,7 @@ public class TipoEntregaAcao extends SnkIntegrationsApi implements AcaoRotinaJav
 
         JapeWrapper tipoEntregaDAO;
         try {
-            tipoEntregaDAO = JapeFactory.dao(DynamicEntityNames.MOVIMENTO_BANCARIO);
+            tipoEntregaDAO = JapeFactory.dao("TxpZapTipoEntrega");
         } catch (Exception e) {
             throw new Exception("Inst\u00E2ncia Tipo de Entrega");
         }
@@ -43,7 +58,7 @@ public class TipoEntregaAcao extends SnkIntegrationsApi implements AcaoRotinaJav
             contextoAcao.confirmar("Tipo de Entrega a Ser Alterado: " + tipoEntregaOld,
                     "Deseja Prosseguir com a Altera\u00E7\u00E3o? " + tetVO.asString("NOME"), 1);
 
-            BigDecimal tipoEntregaNew = (BigDecimal) contextoAcao.getParam("CODTETALTER");
+            BigDecimal tipoEntregaNew = new BigDecimal(contextoAcao.getParam("CODTETALTER").toString());
 
             QueryExecutor query = contextoAcao.getQuery();
             query.setParam("P_CODTET", tipoEntregaNew);
@@ -72,7 +87,7 @@ public class TipoEntregaAcao extends SnkIntegrationsApi implements AcaoRotinaJav
                     "'codigoTipoEntrega': " + tipoEntregaNew + " " +
                     "}";
 
-            String url = this.urlApi + "/v2/snk/pagamentos/creditos";
+            String url = this.urlApi + "/v2/snk/pedidos/ajustetipoentrega";
             String token = IntegrationApi.getToken(this.urlApi + "/oauth/token?grant_type=client_credentials", "POST", "Basic c2Fua2h5YXc6U0Bua2h5QDJV");
             IntegrationApi.sendHttp(url, json, "POST", "Bearer " + token);
         }
