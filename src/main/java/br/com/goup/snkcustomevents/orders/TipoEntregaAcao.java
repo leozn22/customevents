@@ -9,7 +9,7 @@ import br.com.sankhya.extensions.actionbutton.Registro;
 import br.com.sankhya.jape.vo.DynamicVO;
 import br.com.sankhya.jape.wrapper.JapeFactory;
 import br.com.sankhya.jape.wrapper.JapeWrapper;
-import br.com.sankhya.modelcore.util.DynamicEntityNames;
+import br.com.sankhya.modelcore.auth.AuthenticationInfo;
 
 import java.math.BigDecimal;
 
@@ -84,7 +84,9 @@ public class TipoEntregaAcao extends SnkIntegrationsApi implements AcaoRotinaJav
 
             String json = "{ " +
                     "'codigoPedido': " + pedido + ", " +
-                    "'codigoTipoEntrega': " + tipoEntregaNew + " " +
+                    "'codigoTipoEntrega': " + tipoEntregaNew + ", " +
+                    "'codigoUsuario': " + AuthenticationInfo.getCurrent().getUserID().intValue() + ", " +
+                    "'nomeUsuario': " + AuthenticationInfo.getCurrent().getName() + " " +
                     "}";
 
             String url = this.urlApi + "/v2/snk/pedidos/ajustetipoentrega";
