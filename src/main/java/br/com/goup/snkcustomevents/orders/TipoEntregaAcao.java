@@ -86,7 +86,7 @@ public class TipoEntregaAcao extends SnkIntegrationsApi implements AcaoRotinaJav
                     "'codigoPedido': " + pedido + ", " +
                     "'codigoTipoEntrega': " + tipoEntregaNew + ", " +
                     "'codigoUsuario': " + AuthenticationInfo.getCurrent().getUserID().intValue() + ", " +
-                    "'nomeUsuario': " + AuthenticationInfo.getCurrent().getName() + " " +
+                    "'nomeUsuario': '" + AuthenticationInfo.getCurrent().getName() + "' " +
                     "}";
 
             String url = this.urlApi + "/v2/snk/pedidos/ajustetipoentrega";
