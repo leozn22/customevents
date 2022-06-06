@@ -125,9 +125,22 @@ public class FinanceiroEvento extends SnkIntegrationsApi implements EventoProgra
         try {
             DynamicVO financeiroVo = (DynamicVO) persistenceEvent.getVo();
 
-            if (!"".equals(financeiroVo.asString("LINHADIGITAVEL"))) {
-                String url = this.urlApi + "/v2/snk/pagamentos/boletos/" + financeiroVo.asBigDecimal("NUFIN").toString();
-                this.enviarDados("POST", url, "");
+            String linhaDigitavel = financeiroVo.asString("LINHADIGITAVEL");
+
+            if (linhaDigitavel != null && !linhaDigitavel.isEmpty()) {
+                String json = "{"
+                        + "\"idFinanceiro\": " + financeiroVo.asBigDecimal("NUFIN").toString() + ","
+                        + "\"idEmpresa\": " + financeiroVo.asBigDecimal("CODEMP").toString() + ","
+                        + "\"idNota\": " + financeiroVo.asBigDecimal("NUNOTA") + ","
+                        + "\"numeroNota\": " + financeiroVo.asBigDecimal("NUMNOTA").toString() + ","
+                        + "\"idTipoTitulo\": " + financeiroVo.asBigDecimal("CODTIPTIT").toString() + ","
+                        + "\"nossoNumero\": \"" +  financeiroVo.asString("NOSSONUM") + "\", "
+                        + "\"codigoBarra\": \"" +  financeiroVo.asString("CODIGOBARRA") + "\", "
+                        + "\"linhaDigitavel\": \"" +  financeiroVo.asString("LINHADIGITAVEL") + "\""
+                        + "}";
+
+                String url = this.urlApi + "/v2/snk/pagamentos/boletos?assincrono=true";
+                this.enviarDados("POST", url, json);
             }
         } catch (Exception e) {
             e.printStackTrace();
