@@ -123,7 +123,7 @@ public class ProcessarImportacaoXMLNotaAgendamento implements ScheduledAction, A
         paramsCte.addContent(new Element("importaCabCTe").setText("true"));
         paramsCte.addContent(new Element("tipoImportacaoCabCte").setText("C"));
         paramsCte.addContent(new Element("codTipOperCabCTe").setText("2107"));
-        paramsCte.addContent(new Element("codTipNegCabCTe").setText("1024"));
+        paramsCte.addContent(new Element("codTipNegCabCTe").setText("1030"));
         paramsCte.addContent(new Element("codServCabCTe").setText("344"));
         paramsCte.addContent(new Element("codCenCusCabCTe").setText("F"));
         paramsCte.addContent(new Element("codNatCabCTe").setText("F"));
