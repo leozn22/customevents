@@ -273,7 +273,7 @@ public class OrdemProducaoHelper {
             query.setParam("P_CODGRADE", numeroGrade);
             query.nativeSelect("SELECT 0   AS CODEMP, '' AS NOMEPROD, CODPROD AS TZACODPROD, " +
                     "ITEM AS TZANUITEM, NUMNOTA AS TZANUMNOTA, STATUSITEM  AS TZASTATUSITEM, " +
-                    "STATUSPG  AS TZASTATUSPG, 5 AS CODIGOPLAN, QTDNEG " +
+                    "STATUSPG  AS TZASTATUSPG, 6 AS CODIGOPLAN, QTDNEG " +
                     "FROM AD_TGFFINSAL SAL WHERE CODGRADE = {P_CODGRADE}");
 
             while(query.next()){
@@ -299,7 +299,7 @@ public class OrdemProducaoHelper {
                 try {
                     ItemProducao itemProducao = new ItemProducao();
                     itemProducao.setCodigoProduto(BigDecimal.valueOf(qryListaProducao.getInt("CODPROD")));
-                    itemProducao.setCodigoPlanta(5);
+                    itemProducao.setCodigoPlanta(6);
                     itemProducao.setTamanhoLote(qryListaProducao.getBigDecimal("TOTAL_QTD"));
                     itemProducao.setTamanhoLoteMetrosQuadrado(qryListaProducao.getBigDecimal("AREA"));
 
@@ -308,7 +308,7 @@ public class OrdemProducaoHelper {
                         query.setParam("P_CODPROD", qryListaProducao.getInt("CODPROD"));
                         query.nativeSelect("SELECT 0 AS CODEMP, '' AS NOMEPROD, CODPROD AS TZACODPROD, " +
                                 "ITEM AS TZANUITEM, NUMNOTA AS TZANUMNOTA, STATUSITEM  AS TZASTATUSITEM, " +
-                                "STATUSPG  AS TZASTATUSPG, 5 AS CODIGOPLAN, QTDNEG, CODGRADE " +
+                                "STATUSPG  AS TZASTATUSPG, 6 AS CODIGOPLAN, QTDNEG, CODGRADE " +
                                 "FROM AD_TGFFINSAL SAL " +
                                 "WHERE CODGRADE in ( " + String.join(",", listaGrade) + ") " +
                                 "AND CODPROD = {P_CODPROD}");
